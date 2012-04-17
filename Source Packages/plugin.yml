@@ -1,0 +1,19 @@
+name: Employeurs
+main: fr.harmo.Employeurs.Employeurs
+version: 0.1
+author: Harmo
+softdepend: [Vault]
+commands:
+    emp:
+        description: Commande de base pour les joueurs
+        usage: /emp
+    empadm:
+        description: Commande de base pour les admins
+        usage: /empadm
+permissions:
+    emp.list:
+        description: Affiche la liste des emplois disponibles
+        default: true
+    emp.admin.add:
+        description: Ajoute un metier en database
+        default: op
