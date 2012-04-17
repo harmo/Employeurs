@@ -1,0 +1,8 @@
+Employeurs
+
+Plugin pour Bukkit permettant aux joueurs de créer des emplois que d'autres joueurs peuvent accepter.
+Sous forme de "contrats" passés via pancartes, plusieurs types d'emplois seront disponibles.
+
+Ce plugin incluera quelques sources de https://github.com/phrstbrn/Jobs concernant la gestion des connections au serveur MySQL.
+
+Enjoy !
