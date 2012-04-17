@@ -4,10 +4,14 @@ import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
 import java.util.Arrays;
+import org.bukkit.GameMode;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 
 /**
  *
@@ -94,6 +98,7 @@ public class PlayerListener implements Listener {
 							}
 							else {
 								// Enregistrement en bdd
+								
 							}
 							
 							player.sendMessage(Config.empAddCreationSuccess);
@@ -106,6 +111,44 @@ public class PlayerListener implements Listener {
 				}
 				
 				event.setCancelled(true);
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onclick(PlayerInteractEvent event) {
+		Player player = event.getPlayer();
+		if (event.getClickedBlock() != null) {
+			String blockType = event.getClickedBlock().getType().toString();
+			if ("WALL_SIGN".equals(blockType)) {
+				Sign sign = (Sign) event.getClickedBlock().getState();
+				if (sign.getLine(0).contains(Config.prefix)) {
+					if (plugin.perms.has(player, "emp.use")) {
+						if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
+							player.sendMessage("gauche !!!");
+							if (player.getGameMode().equals(GameMode.CREATIVE)){
+								event.setCancelled(true);
+							}
+							else {
+								// Okayy let's left-interact
+								
+							}
+						}
+						if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+							player.sendMessage("droit !!!");
+							if (player.getGameMode().equals(GameMode.CREATIVE)){
+								event.setCancelled(true);
+							}
+							else {
+								// Okayy let's right-interact
+								
+							}
+						}
+					}
+					else {
+						player.sendMessage(Config.noUsePermMessage);
+					}
+				}
 			}
 		}
 	}

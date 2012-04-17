@@ -21,7 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Employeurs extends JavaPlugin {
 	
 	public Permission perms;
-	public BlocksListener blocks = new BlocksListener(this);
+	public BlocksListener blocksL = new BlocksListener(this);
 	public PlayerListener playerL = new PlayerListener(this);
 	public Manager manager = new Manager(this);
 	
@@ -29,8 +29,7 @@ public class Employeurs extends JavaPlugin {
 	public void onEnable() {
 		
 		Config config = new Config(this);
-						
-		config.setDefaultConfig();
+		boolean setDefaultConfig = config.setDefaultConfig();
 		config.setConfig();
 		setupPermissions();
 		if (!loadVault()) {
@@ -42,7 +41,7 @@ public class Employeurs extends JavaPlugin {
 		}
 		
 		PluginManager pm = this.getServer().getPluginManager();
-		pm.registerEvents(blocks, this);
+		pm.registerEvents(blocksL, this);
 		pm.registerEvents(playerL, this);
 		
 		CommandesListener cmds = new CommandesListener(this);
@@ -56,7 +55,7 @@ public class Employeurs extends JavaPlugin {
 	public void onDisable() {
 		getLogger().info("Inactif !");
 	}
-
+	
 	private boolean loadVault() {
 		Plugin test = getServer().getPluginManager().getPlugin("Vault");
 			if (test == null)

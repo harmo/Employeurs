@@ -32,7 +32,7 @@ public class CommandesListener implements CommandExecutor {
 				else if (args.length == 1) {
 					if (args[0].equalsIgnoreCase("list")) {
 						if (plugin.perms.has(player, "emp.list")) {
-							// TODO afficher la liste des emplois dispos
+							plugin.manager.getJobList(player);
 						}
 						else {
 							player.sendMessage(Config.noListPermMessage);
@@ -57,11 +57,22 @@ public class CommandesListener implements CommandExecutor {
 						}
 						return true;
 					}
+					if (args[0].equalsIgnoreCase("stop") && plugin.manager.isInAddMode(player)) {
+						plugin.manager.toggleAddMode(player);
+						return true;
+					}
 				}
 			}
 		}
 		else {
-			
+			if (label.equalsIgnoreCase("emp")) {
+				if (args.length == 1) {
+					if (args[0].equalsIgnoreCase("list")) {
+						plugin.manager.getJobListFromConsole();
+					}
+				}
+				return true;
+			}
 		}
 		return false;
 	}

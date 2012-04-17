@@ -24,6 +24,7 @@ public class Config {
 	public static String noCreatePermMessage;
 	public static String noListPermMessage;
 	public static String noAddPermMessage;
+	public static String noUsePermMessage;
 	public static String helpList;
 	public static String helpAdd;
 	public static String empAddCreationOff;
@@ -45,6 +46,13 @@ public class Config {
 	public static String empAddCreationJobBlockIdsSuccess;
 	public static String empAddCreationSuccess;
 	public static String empAddCreationStop;
+	public static String empEmptyJobList;
+	public static String empCreateSignNoJob;
+	public static String empAddOfferSuccess;
+	public static String empAddOfferError;
+	public static String empDeleteOfferSuccess;
+	public static String empDeleteOfferError;
+	public static String empDeleteOfferNoPerm;
 
 	public Config(Employeurs plugin) {
 		this.plugin = plugin;
@@ -58,6 +66,7 @@ public class Config {
 		noCreatePermMessage = textColor + plugin.getConfig().getString("messages.chat.noCreatePerm");
 		noListPermMessage = textColor + plugin.getConfig().getString("messages.chat.noListPerm");
 		noAddPermMessage = textColor + plugin.getConfig().getString("messages.chat.noAddPerm");
+		noUsePermMessage = textColor + plugin.getConfig().getString("messages.chat.noUsePerm");
 		empAddCreationOff = textColor + plugin.getConfig().getString("messages.chat.creationOff");
 		empAddCreationOn = textColor + plugin.getConfig().getString("messages.chat.creationOn");
 		empAddCreationJobName = textColor + plugin.getConfig().getString("messages.chat.creationJobName");
@@ -77,8 +86,15 @@ public class Config {
 		empAddCreationJobBlockIdsSuccess = textColor + plugin.getConfig().getString("messages.chat.creationjobBlockIdsSuccess");
 		empAddCreationSuccess = textColor + plugin.getConfig().getString("messages.chat.creationSuccess");
 		empAddCreationStop = textColor + plugin.getConfig().getString("messages.chat.creationStop");
+		empEmptyJobList = textColor + plugin.getConfig().getString("messages.chat.emptyJobList");
 		helpList = textColor + plugin.getConfig().getString("messages.help.list");
 		helpAdd = textColor + plugin.getConfig().getString("messages.help.admin.add");
+		empCreateSignNoJob = textColor + plugin.getConfig().getString("messages.sign.error.noJob");
+		empAddOfferSuccess = textColor + plugin.getConfig().getString("messages.sign.success.addOffer");
+		empAddOfferError = textColor + plugin.getConfig().getString("messages.sign.error.addOffer");
+		empDeleteOfferSuccess = textColor + plugin.getConfig().getString("messages.sign.success.deleteOffer");
+		empDeleteOfferError = textColor + plugin.getConfig().getString("messages.sign.error.deleteOffer");
+		empDeleteOfferNoPerm = textColor + plugin.getConfig().getString("messages.sign.error.deleteNoPerm");
 		
 		// MySQL settings
 		String dbType = plugin.getConfig().getString("database.type");
@@ -93,8 +109,14 @@ public class Config {
 			}
 		} 
 		else {
-			Config.datafile = new EFile(plugin);
-			plugin.getLogger().info("Stockage en fichier ok.");
+			try {
+				Config.datafile = new EFile(plugin);
+				Config.datafile.getJobList();
+				plugin.getLogger().info("Stockage en fichier ok.");
+			} catch (Exception e) {
+				plugin.getLogger().info("erreur lors de l'initialisation de stockage en fichier.");
+				e.printStackTrace();
+			}
 		}
 		
 		return true;
@@ -131,7 +153,7 @@ public class Config {
 			
 			// Plugin config
 			if (!config.contains("messages.sign.color")) {
-				config.set("messages.sign.color", 1);
+				config.set("messages.sign.color", 9);
 			}
 			if (!config.contains("messages.sign.prefix")) {
 				config.set("messages.sign.prefix", "[Emploi]");
@@ -147,6 +169,9 @@ public class Config {
 			}
 			if (!config.contains("messages.chat.noAddPerm")) {
 				config.set("messages.chat.noAddPerm", "Vous n' avez pas la permission d'ajouter des emplois.");
+			}
+			if (!config.contains("messages.chat.noUsePerm")) {
+				config.set("messages.chat.noUsePerm", "Vous n' avez pas la permission d'utiliser cela.");
 			}
 			if (!config.contains("messages.chat.creationOff")) {
 				config.set("messages.chat.creationOff", "Mode creation d'emploi [OFF]");
@@ -205,11 +230,32 @@ public class Config {
 			if (!config.contains("messages.chat.creationStop")) {
 				config.set("messages.chat.creationStop", "tapez /empadm stop pour sortir du mode creation d'emploi.");
 			}
+			if (!config.contains("messages.chat.emptyJobList")) {
+				config.set("messages.chat.emptyJobList", "Aucun emploi de disponible.");
+			}
 			if (!config.contains("messages.help.list")) {
 				config.set("messages.help.list", "/emp list  => Affiche la liste des emplois disponibles.");
 			}
 			if (!config.contains("messages.help.admin.add")) {
 				config.set("messages.help.admin.add", "/empadm add  => Ajoute un metier en database.");
+			}
+			if (!config.contains("messages.sign.error.noJob")) {
+				config.set("messages.sign.error.noJob", "Ce metier n existe pas, demandez a un administrateur de le creer");
+			}
+			if (!config.contains("messages.sign.success.addOffer")) {
+				config.set("messages.sign.success.addOffer", "offre d'emploi enregistree avec succes !");
+			}
+			if (!config.contains("messages.sign.error.addOffer")) {
+				config.set("messages.sign.error.addOffer", "Probleme lors de l'enregistrement de l'offre !");
+			}
+			if (!config.contains("messages.sign.success.deleteOffer")) {
+				config.set("messages.sign.success.deleteOffer", "Offre supprimee !");
+			}
+			if (!config.contains("messages.sign.error.deleteOffer")) {
+				config.set("messages.sign.error.deleteOffer", "Probleme lors de la suppression de l'offre !");
+			}
+			if (!config.contains("messages.sign.error.deleteNoPerm")) {
+				config.set("messages.sign.error.deleteNoPerm", "Vous n'avez pas le droit de supprimer cette offre");
 			}
 			
 			plugin.saveConfig();
@@ -226,5 +272,9 @@ public class Config {
 	
 	public static EFile getDbFile() {
 		return datafile;
+	}
+	
+	public void reload() {
+		
 	}
 }
