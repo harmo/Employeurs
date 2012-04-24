@@ -21,9 +21,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class Employeurs extends JavaPlugin {
 	
 	public Permission perms;
-	public BlocksListener blocksL = new BlocksListener(this);
-	public PlayerListener playerL = new PlayerListener(this);
-	public Manager manager = new Manager(this);
+	public BlocksListener blocksL;
+	public PlayerListener playerL;
+	public Manager manager;
 	
 	@Override
 	public void onEnable() {
@@ -39,6 +39,10 @@ public class Employeurs extends JavaPlugin {
 			getServer().getLogger().severe("==============================");
 			setEnabled(false);
 		}
+		
+		blocksL = new BlocksListener(this);
+		playerL = new PlayerListener(this);
+		manager = new Manager(this);
 		
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvents(blocksL, this);

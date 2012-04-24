@@ -70,7 +70,7 @@ public class EFile {
 		return false;
 	}
 	
-	public boolean addJobOffer(String job, String posX, String posY, String posZ, String boss) {
+	public boolean addJobOffer(String job, String pos , String boss,  Integer salary, String items) {
 		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
 		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + job.toUpperCase() + ".db");
 		try {
@@ -79,7 +79,7 @@ public class EFile {
 				parent.mkdirs();
 				file.createNewFile();
 				writer = new FileWriter(file, true);
-				writer.write(job.toUpperCase() + "::" + boss + "::" + posX + "::" + posY + "::" + posZ);
+				writer.write(job.toUpperCase() + "::" + boss + "::" + pos + "::" + salary + "::" + items);
 				writer.write(System.getProperty("line.separator"));
 				writer.flush();
 				writer.close();
@@ -101,7 +101,7 @@ public class EFile {
 				for (int n = 0; n < replace.size(); n++) {
 					writer.write(replace.get(n).toString());
 				}
-				writer.write(job.toUpperCase() + "::" + boss + "::" + posX + "::" + posY + "::" + posZ);
+				writer.write(job.toUpperCase() + "::" + boss + "::" + pos + "::" + salary + "::" + items);
 				writer.flush();
 				writer.close();
 			}
@@ -155,10 +155,30 @@ public class EFile {
 				}
 				return true;
 			}
-			else {
-				plugin.getLogger().info(fileList[i] + " != " + job.toUpperCase() + ".db");
-			}
 		}
 		return false;
+	}
+	
+	public String getJobType(String jobName) {
+		for (int i = 0; i < this.jobList.size(); i++) {
+			String job = (String) this.jobList.get(i);
+			if(job.equals(jobName)) {
+				return (String) this.jobList.get(i + 1);
+			}
+		}
+		return null;
+	}
+
+	public ArrayList getJobAuthorizedIds(String signJobName) {
+		String[] aIds = null;
+		ArrayList aReturn = new ArrayList();
+		for (int i = 0; i < this.jobList.size(); i++) {
+			String job = (String) this.jobList.get(i);
+			if(job.equals(signJobName)) {
+				aIds = this.jobList.get(i + 2).toString().split(", ");
+			}
+		}
+		aReturn.addAll(Arrays.asList(aIds));
+		return aReturn;
 	}
 }

@@ -17,6 +17,9 @@ permissions:
     emp.use:
         description: Permet l utilisation du plugin
         default: true
+    emp.create:
+        description: Permet de creer les offres d'emploi
+        default: true
     emp.admin.add:
         description: Ajoute un metier en database
         default: op

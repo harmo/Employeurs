@@ -2,6 +2,7 @@ package fr.harmo.Employeurs.Listeners;
 
 import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
+import java.util.ArrayList;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -20,6 +21,11 @@ public class BlocksListener implements Listener {
 	
 	private Employeurs plugin;
 	private static final BlockFace[] faces = new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
+	private String signJobName;
+	private String signJobType;
+	private ArrayList aSignJobAuthorizedIds;
+	private String signPos;
+	public Block getBlock;
 
 	public BlocksListener(Employeurs plugin) {
 		this.plugin = plugin;
@@ -38,6 +44,9 @@ public class BlocksListener implements Listener {
 						// File
 						if (Config.getDbFile().deleteOffer(sign.getLine(1), block.getX(), block.getY(), block.getZ())) {
 							player.sendMessage(Config.empDeleteOfferSuccess);
+							if (plugin.manager.isInCreationMode(player)) {
+								plugin.manager.toggleCreaMode(player);
+							}
 						}
 						else{
 							player.sendMessage(Config.empDeleteOfferError);
@@ -63,6 +72,9 @@ public class BlocksListener implements Listener {
 									// File
 									if (Config.getDbFile().deleteOffer(sign.getLine(1), sign.getX(), sign.getY(), sign.getZ())) {
 										player.sendMessage(Config.empDeleteOfferSuccess);
+										if (plugin.manager.isInCreationMode(player)) {
+											plugin.manager.toggleCreaMode(player);
+										}
 									}
 									else{
 										player.sendMessage(Config.empDeleteOfferError);
@@ -100,19 +112,16 @@ public class BlocksListener implements Listener {
 						if (Config.getDbFile().isInJobList(ligne2)) {
 							event.setLine(0, Config.signColor + Config.prefix);
 							event.setLine(1, Config.signColor + ligne2.toUpperCase());
-							// TODO blocks, nombre, salaire
-
-							// Enregistrement de l' offre d' emploi
-							if (Config.getDbFile().addJobOffer(ligne2, posX.toString(), posY.toString(), posZ.toString(), player.getName())) {
-								player.sendMessage(Config.empAddOfferSuccess);
-							}
-							else {
-								player.sendMessage(Config.empAddOfferError);
-								event.getBlock().breakNaturally();
-							}
+							this.signJobName = ligne2;
+							this.signPos = posX.toString() + "::" + posY.toString() + "::" + posZ.toString();
+							plugin.manager.toggleCreaMode(player);
+							plugin.manager.setEmpCreaUsersValue(player, 0);
+							this.aSignJobAuthorizedIds = Config.getDbFile().getJobAuthorizedIds(this.signJobName);
+							this.getBlock = event.getBlock();
 						}
 						else {
 							player.sendMessage(Config.empCreateSignNoJob);
+							plugin.manager.toggleCreaMode(player);
 							event.getBlock().breakNaturally();
 						}
 					}
@@ -125,6 +134,20 @@ public class BlocksListener implements Listener {
 		}
 	}
 	
+	public String getSignJobName() {
+		return this.signJobName;
+	}
 	
+	public String getSignJobType() {
+		return this.signJobType;
+	}
+	
+	public String getSignPos() {
+		return this.signPos;
+	}
+	
+	public ArrayList getSignJobAuthorizedIds() {
+		return this.aSignJobAuthorizedIds;
+	}
 
 }
