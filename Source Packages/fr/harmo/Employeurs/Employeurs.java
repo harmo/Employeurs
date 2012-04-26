@@ -5,6 +5,7 @@ import fr.harmo.Employeurs.Economie.VaultLink;
 import fr.harmo.Employeurs.Listeners.BlocksListener;
 import fr.harmo.Employeurs.Listeners.CommandesListener;
 import fr.harmo.Employeurs.Listeners.PlayerListener;
+import fr.harmo.Employeurs.Manager.*;
 import java.util.List;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.entity.Player;
@@ -23,7 +24,11 @@ public class Employeurs extends JavaPlugin {
 	public Permission perms;
 	public BlocksListener blocksL;
 	public PlayerListener playerL;
-	public Manager manager;
+	public JobCreation jobCreation;
+	public OfferCreation offerCreation;
+	public JobManager jobManager;
+	public BlocksManager blocksM;
+	public Tests tests;
 	
 	@Override
 	public void onEnable() {
@@ -42,7 +47,11 @@ public class Employeurs extends JavaPlugin {
 		
 		blocksL = new BlocksListener(this);
 		playerL = new PlayerListener(this);
-		manager = new Manager(this);
+		blocksM = new BlocksManager(this);
+		jobCreation = new JobCreation(this);
+		offerCreation = new OfferCreation(this);
+		jobManager = new JobManager(this);
+		tests = new Tests(this);
 		
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvents(blocksL, this);

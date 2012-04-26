@@ -32,7 +32,7 @@ public class CommandesListener implements CommandExecutor {
 				else if (args.length == 1) {
 					if (args[0].equalsIgnoreCase("list")) {
 						if (plugin.perms.has(player, "emp.list")) {
-							plugin.manager.getJobList(player);
+							plugin.jobManager.getJobList(player);
 						}
 						else {
 							player.sendMessage(Config.noListPermMessage);
@@ -50,15 +50,15 @@ public class CommandesListener implements CommandExecutor {
 				else if (args.length == 1) {
 					if (args[0].equalsIgnoreCase("add")) {
 						if (plugin.perms.has(player, "emp.admin.add")) {
-							plugin.manager.toggleAddMode(player);
+							plugin.jobCreation.toggleAddMode(player);
 						}
 						else {
 							player.sendMessage(Config.noAddPermMessage);
 						}
 						return true;
 					}
-					if (args[0].equalsIgnoreCase("stop") && plugin.manager.isInAddMode(player)) {
-						plugin.manager.toggleAddMode(player);
+					if (args[0].equalsIgnoreCase("stop") && plugin.jobCreation.isInAddMode(player)) {
+						plugin.jobCreation.toggleAddMode(player);
 						return true;
 					}
 				}
@@ -68,7 +68,7 @@ public class CommandesListener implements CommandExecutor {
 			if (label.equalsIgnoreCase("emp")) {
 				if (args.length == 1) {
 					if (args[0].equalsIgnoreCase("list")) {
-						plugin.manager.getJobListFromConsole();
+						plugin.jobManager.getJobListFromConsole();
 					}
 				}
 				return true;

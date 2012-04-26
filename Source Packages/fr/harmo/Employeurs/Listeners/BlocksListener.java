@@ -44,8 +44,11 @@ public class BlocksListener implements Listener {
 						// File
 						if (Config.getDbFile().deleteOffer(sign.getLine(1), block.getX(), block.getY(), block.getZ())) {
 							player.sendMessage(Config.empDeleteOfferSuccess);
-							if (plugin.manager.isInCreationMode(player)) {
-								plugin.manager.toggleCreaMode(player);
+							if (plugin.offerCreation.isInCreationMode(player)) {
+								plugin.offerCreation.toggleCreaMode(player);
+							}
+							if (plugin.offerCreation.isInNumberIdMode(player)) {
+								plugin.offerCreation.toggleNumberIdMode(player);
 							}
 						}
 						else{
@@ -72,8 +75,11 @@ public class BlocksListener implements Listener {
 									// File
 									if (Config.getDbFile().deleteOffer(sign.getLine(1), sign.getX(), sign.getY(), sign.getZ())) {
 										player.sendMessage(Config.empDeleteOfferSuccess);
-										if (plugin.manager.isInCreationMode(player)) {
-											plugin.manager.toggleCreaMode(player);
+										if (plugin.offerCreation.isInCreationMode(player)) {
+											plugin.offerCreation.toggleCreaMode(player);
+										}
+										if (plugin.offerCreation.isInNumberIdMode(player)) {
+											plugin.offerCreation.toggleNumberIdMode(player);
 										}
 									}
 									else{
@@ -114,14 +120,14 @@ public class BlocksListener implements Listener {
 							event.setLine(1, Config.signColor + ligne2.toUpperCase());
 							this.signJobName = ligne2;
 							this.signPos = posX.toString() + "::" + posY.toString() + "::" + posZ.toString();
-							plugin.manager.toggleCreaMode(player);
-							plugin.manager.setEmpCreaUsersValue(player, 0);
+							plugin.offerCreation.toggleCreaMode(player);
+							plugin.offerCreation.setEmpCreaUsersValue(player, 0);
 							this.aSignJobAuthorizedIds = Config.getDbFile().getJobAuthorizedIds(this.signJobName);
 							this.getBlock = event.getBlock();
 						}
 						else {
 							player.sendMessage(Config.empCreateSignNoJob);
-							plugin.manager.toggleCreaMode(player);
+							plugin.offerCreation.toggleCreaMode(player);
 							event.getBlock().breakNaturally();
 						}
 					}

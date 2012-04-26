@@ -65,7 +65,7 @@ public class Config {
 	public static String empSignCreationBlocks2;
 
 	public Config(Employeurs plugin) {
-		this.plugin = plugin;
+		Config.plugin = plugin;
 	}
 
 	public boolean setConfig() {
