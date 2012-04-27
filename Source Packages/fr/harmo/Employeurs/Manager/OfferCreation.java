@@ -13,7 +13,7 @@ import org.bukkit.entity.Player;
  * @author HarmO
  */
 public class OfferCreation {
-	
+
 	private Employeurs plugin;
 	private HashMap<Player, Integer> empCreaPlayers = new HashMap();
 	private HashMap<Player, Integer> empCreaNumberId = new HashMap();
@@ -21,7 +21,7 @@ public class OfferCreation {
 	public OfferCreation(Employeurs plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	public boolean isInCreationMode(Player player) {
 		return this.empCreaPlayers.containsKey(player);
 	}
@@ -29,6 +29,7 @@ public class OfferCreation {
 		if (this.empCreaPlayers.containsKey(player)) {
 			this.empCreaPlayers.remove(player);
 			player.sendMessage(Config.empSignCreationOff);
+			Config.reload();
 		}
 		else {
 			this.empCreaPlayers.put(player, Integer.valueOf(0));
@@ -52,7 +53,7 @@ public class OfferCreation {
 		}
 		return 0;
 	}
-	
+
 	public boolean isInNumberIdMode(Player player) {
 		return this.empCreaNumberId.containsKey(player);
 	}
@@ -76,7 +77,7 @@ public class OfferCreation {
 		}
 		return 0;
 	}
-	
+
 	public ArrayList addBlocksInOffer(Player player, String message) {
 		plugin.blocksM.clearAcceptedIds();
 		plugin.blocksM.clearRefusedIds();
@@ -126,6 +127,6 @@ public class OfferCreation {
 			e.printStackTrace();
 			return false;
 		}
-			
+
 	}
 }

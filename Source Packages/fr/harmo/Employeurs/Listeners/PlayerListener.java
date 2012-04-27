@@ -5,6 +5,9 @@ import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -20,23 +23,24 @@ import org.bukkit.event.player.PlayerInteractEvent;
  * @author HarmO
  */
 public class PlayerListener implements Listener {
-	
+
 	private Employeurs plugin;
 	public ArrayList signCreationInfos = new ArrayList();
 	private int nbItems = 0;
 	private int index;
 	public ArrayList totalItems = new ArrayList();
 	public Integer salary;
+	private boolean askSalary = false;
 
 	public PlayerListener(Employeurs plugin) {
-		this.plugin = plugin;				
+		this.plugin = plugin;
 	}
-	
+
 	@EventHandler
 	public void onPlayerChat(PlayerChatEvent event) {
 		Player player = event.getPlayer();
 		String message = event.getMessage();
-		
+
 		// ADMIN JOB ADD MODE
 		if (plugin.jobCreation.isInAddMode(player)) {
 			if (plugin.jobCreation.getEmpUsersValue(player) == 0) {
@@ -101,13 +105,13 @@ public class PlayerListener implements Listener {
 							plugin.sendMessageList(player, Arrays.asList(messageList));
 							if (!Config.mysql) {
 								// Enregistrement en fichier
-								Config.getDbFile().setJob(plugin.jobCreation.getJobName(), plugin.jobCreation.getJobType(), aAcceptedIds);
+								Config.getDbFile().addJob(plugin.jobCreation.getJobName(), plugin.jobCreation.getJobType(), aAcceptedIds);
 							}
 							else {
 								// Enregistrement en bdd
-								
+
 							}
-							
+
 							player.sendMessage(Config.empAddCreationSuccess);
 							plugin.jobCreation.toggleAddMode(player);
 						}
@@ -159,7 +163,7 @@ public class PlayerListener implements Listener {
 							this.index = 0;
 							this.totalItems.clear();
 							plugin.offerCreation.setEmpCreaUsersValue(player, 1);
-							
+
 						}
 						else {
 							player.sendMessage(Config.empAddCreationJobBlockIdsSyntaxError);
@@ -168,7 +172,7 @@ public class PlayerListener implements Listener {
 				}
 				event.setCancelled(true);
 			}
-			
+
 			if (plugin.offerCreation.getEmpCreaUsersValue(player) == 1) {
 				// Asking for how much for each item
 				Integer idInt = plugin.tests.isInteger(message);
@@ -177,28 +181,40 @@ public class PlayerListener implements Listener {
 						this.totalItems.add(this.signCreationInfos.get(index) + ":" + idInt);
 						if (this.index < this.nbItems - 1) {
 							this.index++;
+							if (plugin.offerCreation.askHowMuchItems(player, this.index)) {
+								plugin.offerCreation.setEmpCreaNumberIdValue(player, 0);
+							}
 						}
 						else {
 							plugin.offerCreation.toggleNumberIdMode(player);
 							plugin.offerCreation.setEmpCreaUsersValue(player, 2);
+							String[] messageList = {
+								"Quel est le salaire que vous proposez ?",
+								"Indiquez le en tapant salaire=<montant>"
+							};
+							plugin.sendMessageList(player, Arrays.asList(messageList));
 						}
-						if (plugin.offerCreation.askHowMuchItems(player, this.index)) {
-							plugin.offerCreation.setEmpCreaNumberIdValue(player, 0);
-						}
+
 
 					}
 					else {
 						this.totalItems.add(this.signCreationInfos.get(index) + ":" + idInt);
 						if (this.index < this.nbItems - 1) {
 							this.index++;
+							if (plugin.offerCreation.askHowMuchItems(player, this.index)) {
+								plugin.offerCreation.setEmpCreaNumberIdValue(player, 1);
+							}
 						}
 						else {
 							plugin.offerCreation.toggleNumberIdMode(player);
 							plugin.offerCreation.setEmpCreaUsersValue(player, 2);
+							String[] messageList = {
+								"Quel est le salaire que vous proposez ?",
+								"Indiquez le en tapant salaire=<montant>"
+							};
+							plugin.sendMessageList(player, Arrays.asList(messageList));
 						}
-						if (plugin.offerCreation.askHowMuchItems(player, this.index)) {
-							plugin.offerCreation.setEmpCreaNumberIdValue(player, 1);
-						}
+
 					}
 				}
 				else {
@@ -210,29 +226,34 @@ public class PlayerListener implements Listener {
 			}
 			if (plugin.offerCreation.getEmpCreaUsersValue(player) == 2) {
 				// TODO meilleure gestion des erreurs
-				String[] messageList = {
-					"Quel est le salaire que vous proposez ?",
-					"Indiquez le en tapant salaire=<montant>"
-				};
-				plugin.sendMessageList(player, Arrays.asList(messageList));
-				String salary = plugin.tests.isSalarySyntaxIsOk(message);
-				if (!salary.equals("noSalaryError") && !salary.equals("introError")) {
-					Integer intMess = plugin.tests.isInteger(salary);
-					if (intMess != 0) {
-						this.salary = intMess;
-						plugin.offerCreation.setEmpCreaUsersValue(player, 3);
+				if (this.askSalary == true) {
+					String error = plugin.tests.isSalarySyntaxIsOk(message);
+					if (!error.equals("noSalaryError") && !error.equals("introError")) {
+						Integer intMess = plugin.tests.isInteger(error);
+						if (intMess != 0) {
+							this.salary = intMess;
+							plugin.offerCreation.setEmpCreaUsersValue(player, 3);
+						}
+					}
+					else {
+						//player.sendMessage(salary);
 					}
 				}
 				else {
-					player.sendMessage(salary);
+					this.askSalary = true;
 				}
 				event.setCancelled(true);
-			} 
+			}
 			if (plugin.offerCreation.getEmpCreaUsersValue(player) == 3) {
 				// Enregistrement de l' offre d' emploi
-				if (Config.getDbFile().addJobOffer(plugin.blocksL.getSignJobName(), plugin.blocksL.getSignPos(), player.getName(), this.salary, this.totalItems.toString())) {
+				if (Config.getDbFile().addOffer(plugin.blocksL.getSignJobName(), plugin.blocksL.getSignPos(), player.getName(), this.salary, this.totalItems.toString())) {
 					player.sendMessage(Config.empAddOfferSuccess);
 					plugin.offerCreation.toggleCreaMode(player);
+					String[] aPos = plugin.blocksL.getSignPos().split("::");
+					Location loc = new Location(player.getWorld(), new Integer(aPos[0]), new Integer(aPos[1]), new Integer(aPos[2]));
+					Sign sign = (Sign) loc.getBlock().getState();
+					sign.setLine(2, this.salary.toString() + " " + plugin.economy.currencyNameSingular());
+					sign.update();
 				}
 				else {
 					player.sendMessage(Config.empAddOfferError);
@@ -243,7 +264,7 @@ public class PlayerListener implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onclick(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
@@ -258,7 +279,25 @@ public class PlayerListener implements Listener {
 								event.setCancelled(true);
 							}
 							else {
-								// Display Job infos
+								String[] aOffer = plugin.jobManager.getJobInfos(sign.getLocation());
+								player.sendMessage("======- " + aOffer[0] + " -======");
+								player.sendMessage("Employeur : " + aOffer[1]);
+								player.sendMessage("Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural());
+								player.sendMessage("Demande : ");
+								String ids = aOffer[6].substring(1, aOffer[6].length()-1);
+								String[] aIds = ids.split(", ");
+								if (aIds.length > 0) {
+									for (int n = 0; n < aIds.length; n++) {
+										String[] aSplit = aIds[n].split(":");
+										String item = Material.getMaterial(new Integer(aSplit[0])).toString();
+										player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+									}
+								}
+								else {
+									String[] aSplit = ids.split(":");
+									String item = Material.getMaterial(new Integer(aSplit[0])).toString();
+									player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+								}
 							}
 						}
 						if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -267,10 +306,34 @@ public class PlayerListener implements Listener {
 							}
 							else {
 								if (!player.isSneaking()) {
-									// Display how to get the job
+									if (!plugin.jobManager.havePost(player.getName())) {
+										String[] defaultMessagesList = {
+											"Click gauche pour afficher les infos de l'offre.",
+											"Sneak + click droit pour accepter l'offre."
+										};
+										plugin.sendMessageList(player, Arrays.asList(defaultMessagesList));
+									}
+									else {
+										String already;
+										if (plugin.jobManager.haveThisPost(player.getName(), sign.getLocation())) {
+											already = "Vous avez deja cet emploi";
+										}
+										else {
+											already = "Vous avez deja un emploi";
+										}
+										String[] defaultMessagesList = {
+											already,
+											"tapez /emp quit pour quitter cet emploi."
+										};
+										plugin.sendMessageList(player, Arrays.asList(defaultMessagesList));
+									}
 								}
 								else {
-									// Player get the job !
+									if (plugin.jobManager.takeJob(player, sign.getLocation())) {
+										sign.setLine(3, player.getName().toString());
+										sign.update();
+										player.sendMessage("Vous avez le poste !!");
+									}
 								}
 							}
 						}
@@ -282,12 +345,12 @@ public class PlayerListener implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onDrop(PlayerDropItemEvent event) {
 		Player player = event.getPlayer();
 		Item item = event.getItemDrop();
-		
+
 	}
-	
+
 }

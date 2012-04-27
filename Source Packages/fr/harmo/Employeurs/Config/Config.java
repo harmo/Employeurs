@@ -128,7 +128,6 @@ public class Config {
 		} else {
 			try {
 				Config.datafile = new EFile(plugin);
-				Config.datafile.getJobList();
 				plugin.getLogger().info("Stockage en fichier ok.");
 			} catch (Exception e) {
 				plugin.getLogger().info("erreur lors de l'initialisation de stockage en fichier.");
@@ -315,7 +314,13 @@ public class Config {
 		return datafile;
 	}
 
-	public void reload() {
+	public static void reload() {
+		if (!mysql) {
+			getDbFile().reload();
+		}
+		else {
+			//getDb().reload();
+		}
 	}
 
 	public static ArrayList getAuthorizedIds(String type) {

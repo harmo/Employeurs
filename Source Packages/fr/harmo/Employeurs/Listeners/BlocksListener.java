@@ -18,7 +18,7 @@ import org.bukkit.event.block.SignChangeEvent;
  * @author HarmO
  */
 public class BlocksListener implements Listener {
-	
+
 	private Employeurs plugin;
 	private static final BlockFace[] faces = new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
 	private String signJobName;
@@ -30,7 +30,7 @@ public class BlocksListener implements Listener {
 	public BlocksListener(Employeurs plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	@EventHandler
 	public void onBlockDestroy(BlockBreakEvent event) throws Exception {
 		Player player = event.getPlayer();
@@ -98,7 +98,7 @@ public class BlocksListener implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onSignPlace(SignChangeEvent event) {
 		Player player = event.getPlayer();
@@ -127,7 +127,6 @@ public class BlocksListener implements Listener {
 						}
 						else {
 							player.sendMessage(Config.empCreateSignNoJob);
-							plugin.offerCreation.toggleCreaMode(player);
 							event.getBlock().breakNaturally();
 						}
 					}
@@ -139,19 +138,19 @@ public class BlocksListener implements Listener {
 			}
 		}
 	}
-	
+
 	public String getSignJobName() {
 		return this.signJobName;
 	}
-	
+
 	public String getSignJobType() {
 		return this.signJobType;
 	}
-	
+
 	public String getSignPos() {
 		return this.signPos;
 	}
-	
+
 	public ArrayList getSignJobAuthorizedIds() {
 		return this.aSignJobAuthorizedIds;
 	}

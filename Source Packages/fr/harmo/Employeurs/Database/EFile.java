@@ -10,24 +10,28 @@ import java.util.Arrays;
  * @author HarmO
  */
 public class EFile {
-	
+
 	private Employeurs plugin;
 	private FileWriter writer;
-	public ArrayList jobList = new ArrayList();
+	private ArrayList jobList = new ArrayList();
+	private ArrayList offerList = new ArrayList();
+	private ArrayList postList = new ArrayList();
 
 	public EFile(Employeurs plugin) {
 		this.plugin = plugin;
+		reload();
 	}
-	
-	public void setJob(String job, String type, ArrayList ids) {
+
+	// JOBS
+	public void addJob(String label, String type, ArrayList ids) {
 		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois");
-		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois" + System.getProperty("file.separator") + job + ".db");
+		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois" + System.getProperty("file.separator") + label + ".db");
 		try {
 			if (!file.exists()) {
 				parent.mkdirs();
 				file.createNewFile();
 				writer = new FileWriter(file, true);
-				writer.write(job + "::" + type + "::" + ids);
+				writer.write(label + "::" + type + "::" + ids);
 				writer.write(System.getProperty("line.separator"));
 				writer.flush();
 				writer.close();
@@ -35,12 +39,39 @@ public class EFile {
 			else {
 				// Le fichier existe, on remplace ou ajoute les valeurs
 			}
+			reload();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void getJobList() throws Exception {
+	public ArrayList getJob() {
+		ArrayList aJobs = new ArrayList();
+
+		return aJobs;
+	}
+	public String getJobType(String jobName) {
+		for (int i = 0; i < this.jobList.size(); i++) {
+			String job = (String) this.jobList.get(i);
+			if(job.equals(jobName)) {
+				return (String) this.jobList.get(i + 1);
+			}
+		}
+		return null;
+	}
+	public boolean deleteJob(String label, String type) {
+		try {
+
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+
+	}
+	public ArrayList getJobList() throws IOException {
+		return this.jobList;
+	}
+	public void setJobList() throws IOException {
 		this.jobList.clear();
 		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois");
 		String[] fileList = parent.list();
@@ -55,22 +86,40 @@ public class EFile {
 					String type = line.split("::")[1];
 					String ids = line.split("::")[2];
 					String[] job = {label, type, ids};
-					this.jobList.addAll(Arrays.asList(job));
+					this.jobList.add(job);
 				}
 				fr.close();
 				reader.close();
 			}
 		}
 	}
-
 	public boolean isInJobList(String job) {
-		if (this.jobList.contains(job)) {
-			return true;
+		for (int i = 0; i < this.jobList.size(); i++) {
+			String[] aJob = (String[]) this.jobList.get(i);
+			for (int n = 0; n < aJob.length; n++) {
+				if (aJob[n].equals(job))
+					return true;
+			}
 		}
 		return false;
 	}
-	
-	public boolean addJobOffer(String job, String pos , String boss,  Integer salary, String items) {
+	public ArrayList getJobAuthorizedIds(String signJobName) {
+		String[] aIds = null;
+		ArrayList aReturn = new ArrayList();
+		for (int i = 0; i < this.jobList.size(); i++) {
+			String[] aJob = (String[]) this.jobList.get(i);
+			for (int n = 0; n < aJob.length; n++) {
+				if (aJob[0].equals(signJobName)) {
+					aIds = aJob[2].toString().split(", ");
+				}
+			}
+		}
+		aReturn.addAll(Arrays.asList(aIds));
+		return aReturn;
+	}
+
+	// OFFERS
+	public boolean addOffer(String job, String pos , String boss,  Integer salary, String items) {
 		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
 		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + job.toUpperCase() + ".db");
 		try {
@@ -105,13 +154,29 @@ public class EFile {
 				writer.flush();
 				writer.close();
 			}
+			reload();
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return false;
 	}
-	
+	public String[] getOffer(double x, double y, double z) {
+		String[] aJob = null;
+		for (int i = 0; i < this.offerList.size(); i++) {
+			String[] job = (String[]) this.offerList.get(i);
+			for (int n = 0; n < job.length; n++) {
+				if (new Integer(job[2]) == x) {
+					if (new Integer(job[3]) == y) {
+						if (new Integer(job[4]) == z) {
+							aJob = job;
+						}
+					}
+				}
+			}
+		}
+		return aJob;
+	}
 	public boolean deleteOffer(String job, int x, int y, int z) {
 		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
 		String[] fileList = parent.list();
@@ -149,6 +214,7 @@ public class EFile {
 					else {
 						file.delete();
 					}
+					reload();
 				} catch (IOException | NumberFormatException e) {
 					e.printStackTrace();
 					return false;
@@ -158,27 +224,147 @@ public class EFile {
 		}
 		return false;
 	}
-	
-	public String getJobType(String jobName) {
-		for (int i = 0; i < this.jobList.size(); i++) {
-			String job = (String) this.jobList.get(i);
-			if(job.equals(jobName)) {
-				return (String) this.jobList.get(i + 1);
+	public ArrayList getOfferList() {
+		return this.offerList;
+	}
+	public void setOfferList() throws FileNotFoundException, IOException {
+		this.offerList.clear();
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
+		String[] fileList = parent.list();
+		if (parent.exists()) {
+			for (int i = 0; i < fileList.length; i++) {
+				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + fileList[i]);
+				FileReader fr = new FileReader(file);
+				BufferedReader reader = new BufferedReader(fr);
+				String line;
+				while ((line = reader.readLine()) != null) {
+					String label = line.split("::")[0];
+					String boss = line.split("::")[1];
+					String x = line.split("::")[2];
+					String y = line.split("::")[3];
+					String z = line.split("::")[4];
+					String salary = line.split("::")[5];
+					String items = line.split("::")[6];
+					String[] job = {label, boss, x, y, z, salary, items, };
+					this.offerList.add(job);
+				}
+				fr.close();
+				reader.close();
 			}
 		}
-		return null;
+	}
+	public boolean isInOfferList() {
+
+		return false;
 	}
 
-	public ArrayList getJobAuthorizedIds(String signJobName) {
-		String[] aIds = null;
-		ArrayList aReturn = new ArrayList();
-		for (int i = 0; i < this.jobList.size(); i++) {
-			String job = (String) this.jobList.get(i);
-			if(job.equals(signJobName)) {
-				aIds = this.jobList.get(i + 2).toString().split(", ");
+	// POSTS
+	public void addPost(String player, String[] aJob) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes");
+		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + player.toUpperCase() + ".db");
+		try {
+			if (!file.exists()) {
+				plugin.getLogger().info("creation d'un poste !");
+				parent.mkdirs();
+				file.createNewFile();
+				writer = new FileWriter(file, true);
+				writer.write(player + "::");
+				for (int i = 0; i < aJob.length; i++) {
+					if (i == aJob.length-1) {
+						writer.write(aJob[i]);
+					}
+					else {
+						writer.write(aJob[i] + "::");
+					}
+				}
+				writer.write(System.getProperty("line.separator"));
+				writer.flush();
+				writer.close();
+				reload();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	public String[] getPost(String player) {
+		String[] aJob = null;
+		for (int i = 0; i < this.postList.size(); i++) {
+			String[] job = (String[]) this.postList.get(i);
+			for (int n = 0; n < job.length; n++) {
+				if (job[7].equals(player)) {
+					aJob = job;
+				}
 			}
 		}
-		aReturn.addAll(Arrays.asList(aIds));
-		return aReturn;
+		return aJob;
 	}
+	public boolean deletePost(String playername) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes");
+		String[] fileList = parent.list();
+		for (int i = 0; i < fileList.length; i++) {
+			String filename = fileList[i].substring(0, fileList[i].length()-3);
+			if (filename.equals(playername.toUpperCase())) {
+				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + playername.toUpperCase() + ".db");
+				if (file.delete())
+					return true;
+			}
+		}
+		reload();
+		return false;
+	}
+	public ArrayList getPostList() {
+		return this.postList;
+	}
+	public void setPostList() throws IOException {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes");
+		String[] fileList = parent.list();
+		if (parent.exists()) {
+			for (int i = 0; i < fileList.length; i++) {
+				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + fileList[i]);
+				FileReader fr = new FileReader(file);
+				BufferedReader reader = new BufferedReader(fr);
+				String line;
+				while ((line = reader.readLine()) != null) {
+					String player = line.split("::")[0];
+					String label = line.split("::")[1];
+					String boss = line.split("::")[2];
+					String x = line.split("::")[3];
+					String y = line.split("::")[4];
+					String z = line.split("::")[5];
+					String salary = line.split("::")[6];
+					String items = line.split("::")[7];
+					String[] aJob = {label, boss, x, y, z, salary, items, player};
+					this.postList.add(aJob);
+					plugin.jobManager.setPosts(player, aJob);
+				}
+				fr.close();
+				reader.close();
+			}
+		}
+	}
+	public boolean isInPostList() {
+
+		return false;
+	}
+
+	// OTHER
+	public void reload() {
+		try {
+			setJobList();
+			setOfferList();
+			setPostList();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+
+
+
+
+
+
+
+
 }

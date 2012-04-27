@@ -13,7 +13,7 @@ import org.bukkit.material.MaterialData;
  * @author HarmO
  */
 public class JobCreation {
-	
+
 	private Employeurs plugin;
 	private HashMap<Player, Integer> empAddPlayers = new HashMap();
 	private String newJobName;
@@ -22,7 +22,7 @@ public class JobCreation {
 	public JobCreation(Employeurs plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	public boolean isInAddMode(Player player) {
 		return this.empAddPlayers.containsKey(player);
 	}
@@ -30,6 +30,7 @@ public class JobCreation {
 		if (this.empAddPlayers.containsKey(player)) {
 			this.empAddPlayers.remove(player);
 			player.sendMessage(Config.empAddCreationOff);
+			Config.reload();
 		}
 		else {
 			this.empAddPlayers.put(player, Integer.valueOf(0));
@@ -176,5 +177,5 @@ public class JobCreation {
 	public String getJobType() {
 		return newJobType;
 	}
-	
+
 }
