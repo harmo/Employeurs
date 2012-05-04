@@ -4,19 +4,24 @@ import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.Chest;
+import org.bukkit.block.DoubleChest;
 import org.bukkit.block.Sign;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -31,6 +36,7 @@ public class PlayerListener implements Listener {
 	public ArrayList totalItems = new ArrayList();
 	public Integer salary;
 	private boolean askSalary = false;
+	private HashMap<Integer, Integer> aItems = new HashMap<>();
 
 	public PlayerListener(Employeurs plugin) {
 		this.plugin = plugin;
@@ -105,7 +111,7 @@ public class PlayerListener implements Listener {
 							plugin.sendMessageList(player, Arrays.asList(messageList));
 							if (!Config.mysql) {
 								// Enregistrement en fichier
-								Config.getDbFile().addJob(plugin.jobCreation.getJobName(), plugin.jobCreation.getJobType(), aAcceptedIds);
+								Config.getDbFile().addJob(plugin.jobCreation.getJobName(), plugin.jobCreation.getJobType(), aAcceptedIds, player.getWorld().getName());
 							}
 							else {
 								// Enregistrement en bdd
@@ -246,7 +252,7 @@ public class PlayerListener implements Listener {
 			}
 			if (plugin.offerCreation.getEmpCreaUsersValue(player) == 3) {
 				// Enregistrement de l' offre d' emploi
-				if (Config.getDbFile().addOffer(plugin.blocksL.getSignJobName(), plugin.blocksL.getSignPos(), player.getName(), this.salary, this.totalItems.toString())) {
+				if (Config.getDbFile().addOffer(plugin.blocksL.getSignJobName(), plugin.blocksL.getSignPos(), player.getName(), this.salary, this.totalItems.toString(), player.getWorld().getName())) {
 					player.sendMessage(Config.empAddOfferSuccess);
 					plugin.offerCreation.toggleCreaMode(player);
 					String[] aPos = plugin.blocksL.getSignPos().split("::");
@@ -280,24 +286,26 @@ public class PlayerListener implements Listener {
 							}
 							else {
 								String[] aOffer = plugin.jobManager.getJobInfos(sign.getLocation());
-								player.sendMessage("======- " + aOffer[0] + " -======");
-								player.sendMessage("Employeur : " + aOffer[1]);
-								player.sendMessage("Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural());
-								player.sendMessage("Demande : ");
+								ArrayList aMessages = new ArrayList();
+								aMessages.add("======- " + aOffer[0] + " -======");
+								aMessages.add("Employeur : " + aOffer[1]);
+								aMessages.add("Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural());
+								aMessages.add("Demande : ");
 								String ids = aOffer[6].substring(1, aOffer[6].length()-1);
 								String[] aIds = ids.split(", ");
 								if (aIds.length > 0) {
 									for (int n = 0; n < aIds.length; n++) {
 										String[] aSplit = aIds[n].split(":");
 										String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-										player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+										aMessages.add("    ->  " + aSplit[1] + " de " + item);
 									}
 								}
 								else {
 									String[] aSplit = ids.split(":");
 									String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-									player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+									aMessages.add("    ->  " + aSplit[1] + " de " + item);
 								}
+								plugin.sendMessageList(player, aMessages);
 							}
 						}
 						if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
@@ -329,10 +337,25 @@ public class PlayerListener implements Listener {
 									}
 								}
 								else {
-									if (plugin.jobManager.takeJob(player, sign.getLocation())) {
-										sign.setLine(3, player.getName().toString());
-										sign.update();
-										player.sendMessage("Vous avez le poste !!");
+									Location loc = sign.getLocation();
+									String chestCreation = plugin.blocksM.createChest(loc);
+									if (chestCreation.equals("bottomBlockError")) {
+										player.sendMessage("Veuillez detruire ce qui se trouve sous le panneau.");
+										event.setCancelled(true);
+									}
+									else if (chestCreation.equals("rightBlockError")) {
+										player.sendMessage("Veuillez detruire ce qui se trouve en bas a droite du panneau.");
+										event.setCancelled(true);
+									}
+									else {
+										if (plugin.jobManager.takeJob(player, sign.getLocation())) {
+											sign.setLine(3, player.getName().toString());
+											sign.update();
+											player.sendMessage("Vous avez le poste !!");
+										}
+										else {
+											plugin.blocksM.destroyChest(loc);
+										}
 									}
 								}
 							}
@@ -347,10 +370,107 @@ public class PlayerListener implements Listener {
 	}
 
 	@EventHandler
-	public void onDrop(PlayerDropItemEvent event) {
+	public void onChestOpen(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
-		Item item = event.getItemDrop();
-
+		Block block = event.getClickedBlock();
+		if (block.getType().toString().equals("CHEST")) {
+			if (plugin.jobManager.isJobChest(block)) {
+				if (!plugin.perms.has(player, "empadm") || !plugin.jobManager.isPlayerAuthorized(player, block)) {
+					player.sendMessage("Vous ne pouvez pas ouvrir ce coffre");
+					event.setCancelled(true);
+				}
+				else {
+					/*
+					// TODO evaluer le contenu du coffre et le comparer au poste
+					ItemStack[] itemsInChest;
+					Inventory inventory;
+					Chest chest = (Chest) block.getState();
+					inventory  = chest.getInventory();
+					itemsInChest = inventory.getContents();
+					aItems.clear();
+					for (int i = 0; i < itemsInChest.length; i++) {
+						if (itemsInChest[i] != null) {
+							//String item = itemsInChest[i].getType().toString();
+							int itemID = itemsInChest[i].getTypeId() ;
+							int itemAmount = itemsInChest[i].getAmount();
+							if (aItems.containsKey(itemID)) {
+								int newAmount = (int) aItems.get(itemID) + itemAmount;
+								aItems.remove(itemID);
+								aItems.put(itemID, newAmount);
+							}
+							else {
+								aItems.put(itemID, itemAmount);
+							}
+						}
+					}
+					for (Entry<Integer, Integer> item : aItems.entrySet()) {
+						Integer key = item.getKey();
+						Integer val = item.getValue();
+						String itemName = Material.getMaterial(key).toString();
+						Integer rest = plugin.jobManager.howManyItemsMore(val, key, chest.getLocation());
+						player.sendMessage("Il manque encore " + rest + " de " + itemName);
+					}
+					*/
+				}
+			}
+		}
 	}
 
+	@EventHandler
+	public void onChestItemAdd(InventoryClickEvent event) {
+		String type = event.getInventory().getType().toString();
+		if (type.equals("CHEST")) {
+			DoubleChest chest = (DoubleChest) event.getInventory().getHolder();
+			Chest lChest = (Chest) chest.getLeftSide();
+			Block lBlock = lChest.getBlock();
+			if (plugin.jobManager.isJobChest(lBlock)) {
+				if (event.getRawSlot() < 54) {
+					Player player = (Player) event.getWhoClicked();
+					if (!event.getCurrentItem().toString().equals("AIR")) {
+						// au click il y avait kke chose dans slot
+					}
+					if (!event.getCursor().toString().equals("AIR")) {
+						// au click player a pose kke chose
+					}
+					ItemStack itemstack = event.getCurrentItem();
+					Integer itemID = itemstack.getTypeId();
+					aItems.clear();
+					if (plugin.jobManager.isItemInPost(itemID, player)) {
+						ItemStack[] itemsInChest = chest.getInventory().getContents();
+						aItems.put(itemstack.getTypeId(), itemstack.getAmount());
+						for (int i = 0; i < itemsInChest.length; i++) {
+							if (itemsInChest[i] != null) {
+								//String item = itemsInChest[i].getType().toString();
+								int itemId = itemsInChest[i].getTypeId() ;
+								int itemAmount = itemsInChest[i].getAmount();
+								if (aItems.containsKey(itemId)) {
+									int newAmount = (int) aItems.get(itemId) + itemAmount;
+									aItems.remove(itemId);
+									aItems.put(itemId, newAmount);
+								}
+								else {
+									aItems.put(itemId, itemAmount);
+								}
+							}
+						}
+						for (Entry<Integer, Integer> item : aItems.entrySet()) {
+							Integer key = item.getKey();
+							Integer val = item.getValue();
+							String itemName = Material.getMaterial(key).toString();
+							Integer rest = plugin.jobManager.howManyItemsMore(val, key, chest.getLocation());
+							player.sendMessage("Il manque encore " + rest + " de " + itemName);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@EventHandler
+	public void onPlayerLogout(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		String worldname = player.getWorld().getName();
+		// TODO register chest if player got one
+		plugin.jobManager.registerPlayerChest(player, worldname);
+	}
 }

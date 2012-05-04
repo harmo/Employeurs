@@ -3,6 +3,7 @@ package fr.harmo.Employeurs.Listeners;
 import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -42,7 +43,10 @@ public class BlocksListener implements Listener {
 				if (plugin.perms.has(player, "emp.admin.destroy")) {
 					if (!Config.mysql) {
 						// File
-						if (Config.getDbFile().deleteOffer(sign.getLine(1), block.getX(), block.getY(), block.getZ())) {
+						if (Config.getDbFile().deleteOffer(sign.getLine(1), block.getX(), block.getY(), block.getZ(), player.getWorld().getName())) {
+							Location loc = sign.getLocation();
+							plugin.blocksM.destroyChest(loc);
+							// TODO supprimer l'emploi en cours, si existant
 							player.sendMessage(Config.empDeleteOfferSuccess);
 							if (plugin.offerCreation.isInCreationMode(player)) {
 								plugin.offerCreation.toggleCreaMode(player);
@@ -73,7 +77,10 @@ public class BlocksListener implements Listener {
 							if (plugin.perms.has(player, "emp.admin.destroy")) {
 								if (!Config.mysql) {
 									// File
-									if (Config.getDbFile().deleteOffer(sign.getLine(1), sign.getX(), sign.getY(), sign.getZ())) {
+									if (Config.getDbFile().deleteOffer(sign.getLine(1), sign.getX(), sign.getY(), sign.getZ(), player.getWorld().getName())) {
+										Location loc = sign.getLocation();
+										plugin.blocksM.destroyChest(loc);
+										// TODO supprimer l'emploi en cours, si existant
 										player.sendMessage(Config.empDeleteOfferSuccess);
 										if (plugin.offerCreation.isInCreationMode(player)) {
 											plugin.offerCreation.toggleCreaMode(player);
@@ -95,6 +102,16 @@ public class BlocksListener implements Listener {
 						}
 					}
 				}
+				else {
+					if ("CHEST".equals(material.toString())) {
+						if (plugin.jobManager.isJobChest(block)) {
+							event.setCancelled(true);
+						}
+						else {
+							player.sendMessage("not a job chest");
+						}
+					}
+				}
 			}
 		}
 	}
@@ -113,22 +130,31 @@ public class BlocksListener implements Listener {
 		if ("WALL_SIGN".equals(material.toString())) {
 			if (ligne1.equalsIgnoreCase(Config.prefix)) {
 				if (plugin.perms.has(player, "emp.create")) {
-					if (!Config.mysql) {
-						// File
-						if (Config.getDbFile().isInJobList(ligne2)) {
-							event.setLine(0, Config.signColor + Config.prefix);
-							event.setLine(1, Config.signColor + ligne2.toUpperCase());
-							this.signJobName = ligne2;
-							this.signPos = posX.toString() + "::" + posY.toString() + "::" + posZ.toString();
-							plugin.offerCreation.toggleCreaMode(player);
-							plugin.offerCreation.setEmpCreaUsersValue(player, 0);
-							this.aSignJobAuthorizedIds = Config.getDbFile().getJobAuthorizedIds(this.signJobName);
-							this.getBlock = event.getBlock();
+					if (plugin.blocksM.isSignPlacedCorrectly(event.getBlock().getLocation(), event.getBlock())) {
+						if (!Config.mysql) {
+							// File
+							if (Config.getDbFile().isInJobList(ligne2)) {
+								event.setLine(0, Config.signColor + Config.prefix);
+								event.setLine(1, Config.signColor + ligne2.toUpperCase());
+								this.signJobName = ligne2;
+								this.signPos = posX.toString() + "::" + posY.toString() + "::" + posZ.toString();
+								plugin.offerCreation.toggleCreaMode(player);
+								plugin.offerCreation.setEmpCreaUsersValue(player, 0);
+								this.aSignJobAuthorizedIds = Config.getDbFile().getJobAuthorizedIds(this.signJobName);
+								this.getBlock = event.getBlock();
+							}
+							else {
+								player.sendMessage(Config.empCreateSignNoJob);
+								event.getBlock().breakNaturally();
+							}
 						}
 						else {
-							player.sendMessage(Config.empCreateSignNoJob);
-							event.getBlock().breakNaturally();
+							//MySQL
+
 						}
+					}
+					else {
+						player.sendMessage("La pancarte doit etre placee a un bloc du sol et doit avoir un espace libre de chaque cote.");
 					}
 				}
 				else {
@@ -138,6 +164,7 @@ public class BlocksListener implements Listener {
 			}
 		}
 	}
+
 
 	public String getSignJobName() {
 		return this.signJobName;

@@ -1,9 +1,9 @@
 package fr.harmo.Employeurs.Listeners;
 
-import com.sun.management.VMOption;
 import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
+import java.util.Arrays;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -38,94 +38,104 @@ public class CommandesListener implements CommandExecutor {
 				else if (args.length >= 1) {
 					if (args[0].equalsIgnoreCase("list")) {
 						if (args.length < 2) {
+							ArrayList aMessages = new ArrayList();
 							if (plugin.perms.has(player, "emp.list")) {
 								ArrayList jobList = plugin.jobManager.getJobList();
 								if (jobList.size() > 0) {
 									for (int i = 0; i < jobList.size(); i++) {
 										String[] aJob = (String[]) jobList.get(i);
-										player.sendMessage("======- " + aJob[0] + " -======");
-										player.sendMessage("Type : " + aJob[1]);
-										player.sendMessage("Blocs autorisés : " + aJob[2]);
+										aMessages.add("======- " + aJob[0] + " -======");
+										aMessages.add("||  Type : " + aJob[1]);
+										aMessages.add("||  Blocs autorisés : " + aJob[2]);
 									}
 								}
 								else {
-									player.sendMessage(Config.empEmptyJobList);
+									aMessages.add("||  " + Config.empEmptyJobList);
 								}
 							}
 							else {
-								player.sendMessage(Config.noListPermMessage);
+								aMessages.add("||  " + Config.noListPermMessage);
 							}
+							aMessages.add("----------------------------------");
+							plugin.sendMessageList(player, aMessages);
 							return true;
 						}
 						else {
 							if (args[1].equalsIgnoreCase("offers")) {
+								ArrayList aMessages = new ArrayList();
 								if (plugin.perms.has(player, "emp.list.offers")) {
 									ArrayList offerList = plugin.jobManager.getOfferList();
 									if (offerList.size() > 0) {
 										for (int i = 0; i < offerList.size(); i++) {
 											String[] aOffer = (String[]) offerList.get(i);
-											player.sendMessage("======- " + aOffer[0] + " -======");
-											player.sendMessage("Employeur : " + aOffer[1]);
-											player.sendMessage("Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural());
-											player.sendMessage("Demande : ");
+											aMessages.add("======- " + aOffer[0] + " -======");
+											aMessages.add("||  Employeur : " + aOffer[1]);
+											aMessages.add("||  Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural());
+											aMessages.add("||  Demande : ");
 											String ids = aOffer[6].substring(1, aOffer[6].length()-1);
 											String[] aIds = ids.split(", ");
 											if (aIds.length > 0) {
 												for (int n = 0; n < aIds.length; n++) {
 													String[] aSplit = aIds[n].split(":");
 													String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-													player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+													aMessages.add("||      ->  " + aSplit[1] + " de " + item);
 												}
 											}
 											else {
 												String[] aSplit = ids.split(":");
 												String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-												player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+												aMessages.add("||      ->  " + aSplit[1] + " de " + item);
 											}
 										}
 									}
 									else {
-										player.sendMessage("Aucune offre !");
+										aMessages.add("||  Aucune offre !");
 									}
 								}
 								else {
-									player.sendMessage(Config.noListPermMessage);
+									aMessages.add(Config.noListPermMessage);
 								}
+								aMessages.add("----------------------------------");
+								plugin.sendMessageList(player, aMessages);
 								return true;
 							}
 							if (args[1].equalsIgnoreCase("posts")) {
+								// TODO separate list and infos
+								ArrayList aMessages = new ArrayList();
 								if (plugin.perms.has(player, "emp.list.posts")) {
 									ArrayList postList = plugin.jobManager.getPostList();
 									if (postList.size() > 0) {
 										for (int i = 0; i < postList.size(); i++) {
 											String[] aPost = (String[]) postList.get(i);
-											player.sendMessage("======- " + aPost[0] + " -======");
-											player.sendMessage("Employeur : " + aPost[1]);
-											player.sendMessage("Salaire : " + aPost[5] + " " + plugin.economy.currencyNamePlural());
-											player.sendMessage("Demande : ");
+											aMessages.add("======- " + aPost[0] + " -======");
+											aMessages.add("||  Employeur : " + aPost[1]);
+											aMessages.add("||  Salaire : " + aPost[5] + " " + plugin.economy.currencyNamePlural());
+											aMessages.add("||  Demande : ");
 											String ids = aPost[6].substring(1, aPost[6].length()-1);
 											String[] aIds = ids.split(", ");
 											if (aIds.length > 0) {
 												for (int n = 0; n < aIds.length; n++) {
 													String[] aSplit = aIds[n].split(":");
 													String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-													player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+													aMessages.add("||      ->  " + aSplit[1] + " de " + item);
 												}
 											}
 											else {
 												String[] aSplit = ids.split(":");
 												String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-												player.sendMessage("    ->  " + aSplit[1] + " de " + item);
+												aMessages.add("||      ->  " + aSplit[1] + " de " + item);
 											}
 										}
 									}
 									else {
-										player.sendMessage("Aucune offre n'a ete acceptee !");
+										aMessages.add("||  Aucune offre n'a ete acceptee !");
 									}
 								}
 								else {
-									player.sendMessage(Config.noListPermMessage);
+									aMessages.add(Config.noListPermMessage);
 								}
+								aMessages.add("----------------------------------");
+								plugin.sendMessageList(player, aMessages);
 								return true;
 							}
 						}
@@ -133,18 +143,19 @@ public class CommandesListener implements CommandExecutor {
 					if (args[0].equalsIgnoreCase("quit")) {
 						if (plugin.perms.has(player, "emp.quit")) {
 							if (plugin.jobManager.havePost(player.getName())) {
-								String[] aPostInfos = plugin.jobManager.getPostInfos(player.getName());
-								int x = new Integer(aPostInfos[2]);
-								int y = new Integer(aPostInfos[3]);
-								int z = new Integer(aPostInfos[4]);
-								Location origin = new Location(player.getWorld(), x, y, z);
-								Block block = (Block) origin.getBlock();
-								Sign sign = (Sign)block.getState();
-								if (plugin.jobManager.quitJob(player.getName())) {
+								if (plugin.jobManager.quitJob(player)) {
+									String[] aPostInfos = plugin.jobManager.getPostInfos(player.getName());
+									int x = new Integer(aPostInfos[2]);
+									int y = new Integer(aPostInfos[3]);
+									int z = new Integer(aPostInfos[4]);
+									Location origin = new Location(player.getWorld(), x, y, z);
+									Block block = (Block) origin.getBlock();
+									Sign sign = (Sign)block.getState();
+									Location loc = sign.getLocation();
+									plugin.blocksM.destroyChest(loc);
 									sign.setLine(3, "");
 									sign.update();
 									player.sendMessage("Vous avez quitte cet emploi !");
-									// TODO reload de la sign
 								}
 							}
 							else {
@@ -179,86 +190,114 @@ public class CommandesListener implements CommandExecutor {
 			}
 		}
 		else {
+			//////////////////////////////
+			/* Console commands */
+		       //////////////////////////////
 			if (label.equalsIgnoreCase("emp")) {
+				if (args.length == 0) {
+					sendConsoleHelp();
+					return true;
+				}
 				if (args.length >= 1) {
 					if (args[0].equalsIgnoreCase("list")) {
 						if (args.length < 2) {
 							ArrayList jobList = plugin.jobManager.getJobList();
+							ArrayList aMessages = new ArrayList();
 							if (jobList.size() > 0) {
 								for (int i = 0; i < jobList.size(); i++) {
 									String[] aJob = (String[]) jobList.get(i);
-									plugin.getLogger().info("======- " + aJob[0] + " -======");
-									plugin.getLogger().info("Type : " + aJob[1]);
-									plugin.getLogger().info("Blocs autorises : " + aJob[2]);
+									aMessages.add("======- " + aJob[0] + " -======");
+									aMessages.add("||  Type : " + aJob[1]);
+									aMessages.add("||  Blocs autorises : " + aJob[2]);
 								}
 							}
 							else {
-								plugin.getLogger().info(Config.empEmptyJobList);
+								aMessages.add(Config.empEmptyJobList);
 							}
+							aMessages.add("----------------------------------");
+							plugin.sendConsoleMessageList(aMessages);
 						}
 						else {
 							if (args[1].equalsIgnoreCase("offers")) {
 								ArrayList offerList = plugin.jobManager.getOfferList();
+								ArrayList aMessages = new ArrayList();
 								if (offerList.size() > 0) {
 									for (int i = 0; i < offerList.size(); i++) {
 										String[] aOffer = (String[]) offerList.get(i);
-										plugin.getLogger().info("======- " + aOffer[0] + " -======");
-										plugin.getLogger().info("Employeur : " + aOffer[1]);
-										plugin.getLogger().info("Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural().toString());
-										plugin.getLogger().info("Demande : ");
+										aMessages.add("======- " + aOffer[0] + " -======");
+										aMessages.add("||  Employeur : " + aOffer[1]);
+										aMessages.add("||  Salaire : " + aOffer[5] + " " + plugin.economy.currencyNamePlural().toString());
+										aMessages.add("||  Demande : ");
 										String ids = aOffer[6].substring(1, aOffer[6].length()-1);
 										String[] aIds = ids.split(", ");
 										if (aIds.length > 0) {
 											for (int n = 0; n < aIds.length; n++) {
 												String[] aSplit = aIds[n].split(":");
 												String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-												plugin.getLogger().info("    ->  " + aSplit[1] + " de " + item);
+												aMessages.add("||      ->  " + aSplit[1] + " de " + item);
 											}
 										}
 										else {
 											String[] aSplit = ids.split(":");
 											String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-											plugin.getLogger().info("    ->  " + aSplit[1] + " de " + item);
+											aMessages.add("||      ->  " + aSplit[1] + " de " + item);
 										}
 									}
 								}
 								else {
-									plugin.getLogger().info("Aucune offre !");
+									aMessages.add("||  Aucune offre !");
 								}
+								aMessages.add("----------------------------------");
+								plugin.sendConsoleMessageList(aMessages);
 							}
 							if (args[1].equalsIgnoreCase("posts")) {
 								ArrayList postList = plugin.jobManager.getPostList();
+								ArrayList aMessages = new ArrayList();
 								if (postList.size() > 0) {
 									for (int i = 0; i < postList.size(); i++) {
 										String[] aPost = (String[]) postList.get(i);
-										plugin.getLogger().info("======- " + aPost[0] + " -======");
-										plugin.getLogger().info("Employeur : " + aPost[1]);
-										plugin.getLogger().info("Salaire : " + aPost[5] + " " + plugin.economy.currencyNamePlural());
-										plugin.getLogger().info("Demande : ");
+										aMessages.add("======- " + aPost[0] + " -======");
+										aMessages.add("||  Employeur : " + aPost[1]);
+										aMessages.add("||  Salaire : " + aPost[5] + " " + plugin.economy.currencyNamePlural());
+										aMessages.add("||  Demande restante : ");
+										// TODO changer message si fichier coffre vide
 										String ids = aPost[6].substring(1, aPost[6].length()-1);
 										String[] aIds = ids.split(", ");
 										if (aIds.length > 0) {
 											for (int n = 0; n < aIds.length; n++) {
 												String[] aSplit = aIds[n].split(":");
 												String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-												plugin.getLogger().info("    ->  " + aSplit[1] + " de " + item);
+												int x = new Integer(aPost[2]);
+												int y = new Integer(aPost[3]);
+												int z = new Integer(aPost[4]);
+												Integer rest = plugin.jobManager.getRecolted(new Integer(aSplit[0]), aPost[7], x, y, z);
+												aMessages.add("||      ->  " + rest + " de " + item);
 											}
 										}
 										else {
 											String[] aSplit = ids.split(":");
 											String item = Material.getMaterial(new Integer(aSplit[0])).toString();
-											plugin.getLogger().info("    ->  " + aSplit[1] + " de " + item);
+											int x = new Integer(aPost[2]);
+											int y = new Integer(aPost[3]);
+											int z = new Integer(aPost[4]);
+											Integer rest = plugin.jobManager.getRecolted(new Integer(aSplit[0]), aPost[7], x, y, z);
+											aMessages.add("||      ->  " + rest + " de " + item);
 										}
 									}
 								}
 								else {
-									plugin.getLogger().info("Aucune offre n'a ete acceptee !");
+									aMessages.add("||  Aucune offre n'a ete acceptee !");
 								}
+								aMessages.add("----------------------------------");
+								plugin.sendConsoleMessageList(aMessages);
 							}
 						}
 					}
 				}
 				return true;
+			}
+			else {
+				plugin.getLogger().info("Commande utilisable seulement en jeu !");
 			}
 		}
 		return false;
@@ -272,6 +311,15 @@ public class CommandesListener implements CommandExecutor {
 	private void sendHelpAdmin(Player player) {
 		player.sendMessage("====== Employeurs - AdminHelp =======");
 		player.sendMessage(Config.helpAdd);
+	}
+
+	private void sendConsoleHelp() {
+		String[] aMessages = {
+			"====== Employeurs - Help =======",
+			Config.helpList,
+			Config.helpAdd
+		};
+		plugin.sendConsoleMessageList(Arrays.asList(aMessages));
 	}
 
 }

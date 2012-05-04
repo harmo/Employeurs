@@ -4,6 +4,9 @@ import fr.harmo.Employeurs.Employeurs;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import org.bukkit.World;
+import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -23,15 +26,15 @@ public class EFile {
 	}
 
 	// JOBS
-	public void addJob(String label, String type, ArrayList ids) {
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois");
-		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois" + System.getProperty("file.separator") + label + ".db");
+	public void addJob(String label, String type, ArrayList ids, String world) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Emplois");
+		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Emplois" + System.getProperty("file.separator") + label + ".db");
 		try {
 			if (!file.exists()) {
 				parent.mkdirs();
 				file.createNewFile();
 				writer = new FileWriter(file, true);
-				writer.write(label + "::" + type + "::" + ids);
+				writer.write(label + "::" + type + "::" + ids + "::" + world);
 				writer.write(System.getProperty("line.separator"));
 				writer.flush();
 				writer.close();
@@ -73,23 +76,32 @@ public class EFile {
 	}
 	public void setJobList() throws IOException {
 		this.jobList.clear();
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois");
-		String[] fileList = parent.list();
-		if (parent.exists()) {
-			for (int i = 0; i < fileList.length; i++) {
-				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Emplois" + System.getProperty("file.separator") + fileList[i]);
-				FileReader fr = new FileReader(file);
-				BufferedReader reader = new BufferedReader(fr);
-				String line;
-				while ((line = reader.readLine()) != null) {
-					String label = line.split("::")[0];
-					String type = line.split("::")[1];
-					String ids = line.split("::")[2];
-					String[] job = {label, type, ids};
-					this.jobList.add(job);
+		List<World> world = plugin.getServer().getWorlds();
+		for (World w : world) {
+			String worldName = w.getName();
+			File worldFile = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName);
+			if (!worldFile.exists()) {
+				worldFile.mkdirs();
+			}
+			File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Emplois");
+			String[] fileList = parent.list();
+			if (parent.exists()) {
+				for (int i = 0; i < fileList.length; i++) {
+					File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Emplois" + System.getProperty("file.separator") + fileList[i]);
+					FileReader fr = new FileReader(file);
+					BufferedReader reader = new BufferedReader(fr);
+					String line;
+					while ((line = reader.readLine()) != null) {
+						String label = line.split("::")[0];
+						String type = line.split("::")[1];
+						String ids = line.split("::")[2];
+						String worldname = line.split("::")[3];
+						String[] job = {label, type, ids, worldname};
+						this.jobList.add(job);
+					}
+					fr.close();
+					reader.close();
 				}
-				fr.close();
-				reader.close();
 			}
 		}
 	}
@@ -119,16 +131,16 @@ public class EFile {
 	}
 
 	// OFFERS
-	public boolean addOffer(String job, String pos , String boss,  Integer salary, String items) {
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
-		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + job.toUpperCase() + ".db");
+	public boolean addOffer(String job, String pos , String boss,  Integer salary, String items, String world) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Offres");
+		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + job.toUpperCase() + ".db");
 		try {
 			if (!file.exists()) {
 				plugin.getLogger().info("creation d'une offre !");
 				parent.mkdirs();
 				file.createNewFile();
 				writer = new FileWriter(file, true);
-				writer.write(job.toUpperCase() + "::" + boss + "::" + pos + "::" + salary + "::" + items);
+				writer.write(job.toUpperCase() + "::" + boss + "::" + pos + "::" + salary + "::" + items + "::" + world);
 				writer.write(System.getProperty("line.separator"));
 				writer.flush();
 				writer.close();
@@ -150,7 +162,7 @@ public class EFile {
 				for (int n = 0; n < replace.size(); n++) {
 					writer.write(replace.get(n).toString());
 				}
-				writer.write(job.toUpperCase() + "::" + boss + "::" + pos + "::" + salary + "::" + items);
+				writer.write(job.toUpperCase() + "::" + boss + "::" + pos + "::" + salary + "::" + items + "::" + world);
 				writer.flush();
 				writer.close();
 			}
@@ -177,14 +189,14 @@ public class EFile {
 		}
 		return aJob;
 	}
-	public boolean deleteOffer(String job, int x, int y, int z) {
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
+	public boolean deleteOffer(String job, int x, int y, int z, String world) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Offres");
 		String[] fileList = parent.list();
 		String jobCleaned = job.substring(2, job.length());
 		for (int i = 0; i < fileList.length; i++) {
 			if (fileList[i].equals(jobCleaned.toUpperCase() + ".db")) {
 				try {
-					File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + jobCleaned.toUpperCase() + ".db");
+					File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + jobCleaned.toUpperCase() + ".db");
 					FileReader fr = new FileReader(file);
 					BufferedReader reader = new BufferedReader(fr);
 					String line = "";
@@ -229,27 +241,32 @@ public class EFile {
 	}
 	public void setOfferList() throws FileNotFoundException, IOException {
 		this.offerList.clear();
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres");
-		String[] fileList = parent.list();
-		if (parent.exists()) {
-			for (int i = 0; i < fileList.length; i++) {
-				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + fileList[i]);
-				FileReader fr = new FileReader(file);
-				BufferedReader reader = new BufferedReader(fr);
-				String line;
-				while ((line = reader.readLine()) != null) {
-					String label = line.split("::")[0];
-					String boss = line.split("::")[1];
-					String x = line.split("::")[2];
-					String y = line.split("::")[3];
-					String z = line.split("::")[4];
-					String salary = line.split("::")[5];
-					String items = line.split("::")[6];
-					String[] job = {label, boss, x, y, z, salary, items, };
-					this.offerList.add(job);
+		List<World> world = plugin.getServer().getWorlds();
+		for (World w : world) {
+			String worldName = w.getName();
+			File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Offres");
+			String[] fileList = parent.list();
+			if (parent.exists()) {
+				for (int i = 0; i < fileList.length; i++) {
+					File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Offres" + System.getProperty("file.separator") + fileList[i]);
+					FileReader fr = new FileReader(file);
+					BufferedReader reader = new BufferedReader(fr);
+					String line;
+					while ((line = reader.readLine()) != null) {
+						String label = line.split("::")[0];
+						String boss = line.split("::")[1];
+						String x = line.split("::")[2];
+						String y = line.split("::")[3];
+						String z = line.split("::")[4];
+						String salary = line.split("::")[5];
+						String items = line.split("::")[6];
+						String worldname = line.split("::")[7];
+						String[] job = {label, boss, x, y, z, salary, items, worldname};
+						this.offerList.add(job);
+					}
+					fr.close();
+					reader.close();
 				}
-				fr.close();
-				reader.close();
 			}
 		}
 	}
@@ -259,9 +276,9 @@ public class EFile {
 	}
 
 	// POSTS
-	public void addPost(String player, String[] aJob) {
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes");
-		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + player.toUpperCase() + ".db");
+	public void addPost(String player, String[] aJob, String[] aChest, String world) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Postes");
+		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + player.toUpperCase() + ".db");
 		try {
 			if (!file.exists()) {
 				plugin.getLogger().info("creation d'un poste !");
@@ -285,6 +302,30 @@ public class EFile {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Coffres");
+		file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Coffres" + System.getProperty("file.separator") + player.toUpperCase() + ".db");
+		try {
+			if (!file.exists()) {
+				parent.mkdirs();
+				file.createNewFile();
+				/*writer = new FileWriter(file, true);
+				writer.write(player + "::");
+				for (int i = 0; i < aChest.length; i++) {
+					if (i == aChest.length-1) {
+						writer.write(aChest[i]);
+					}
+					else {
+						writer.write(aChest[i] + "::");
+					}
+				}
+				writer.write(System.getProperty("line.separator"));
+				writer.flush();
+				writer.close();*/
+				reload();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	public String[] getPost(String player) {
 		String[] aJob = null;
@@ -298,13 +339,13 @@ public class EFile {
 		}
 		return aJob;
 	}
-	public boolean deletePost(String playername) {
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes");
+	public boolean deletePost(String playername, String world) {
+		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Postes");
 		String[] fileList = parent.list();
 		for (int i = 0; i < fileList.length; i++) {
 			String filename = fileList[i].substring(0, fileList[i].length()-3);
 			if (filename.equals(playername.toUpperCase())) {
-				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + playername.toUpperCase() + ".db");
+				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + playername.toUpperCase() + ".db");
 				if (file.delete())
 					return true;
 			}
@@ -316,35 +357,115 @@ public class EFile {
 		return this.postList;
 	}
 	public void setPostList() throws IOException {
-		File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes");
-		String[] fileList = parent.list();
-		if (parent.exists()) {
-			for (int i = 0; i < fileList.length; i++) {
-				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + fileList[i]);
-				FileReader fr = new FileReader(file);
-				BufferedReader reader = new BufferedReader(fr);
-				String line;
-				while ((line = reader.readLine()) != null) {
-					String player = line.split("::")[0];
-					String label = line.split("::")[1];
-					String boss = line.split("::")[2];
-					String x = line.split("::")[3];
-					String y = line.split("::")[4];
-					String z = line.split("::")[5];
-					String salary = line.split("::")[6];
-					String items = line.split("::")[7];
-					String[] aJob = {label, boss, x, y, z, salary, items, player};
-					this.postList.add(aJob);
-					plugin.jobManager.setPosts(player, aJob);
+		this.postList.clear();
+		List<World> world = plugin.getServer().getWorlds();
+		for (World w : world) {
+			String worldName = w.getName();
+			File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Postes");
+			String[] fileList = parent.list();
+			if (parent.exists()) {
+				for (int i = 0; i < fileList.length; i++) {
+					File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + fileList[i]);
+					FileReader fr = new FileReader(file);
+					BufferedReader reader = new BufferedReader(fr);
+					String line;
+					while ((line = reader.readLine()) != null) {
+						String player = line.split("::")[0];
+						String label = line.split("::")[1];
+						String boss = line.split("::")[2];
+						String x = line.split("::")[3];
+						String y = line.split("::")[4];
+						String z = line.split("::")[5];
+						String salary = line.split("::")[6];
+						String items = line.split("::")[7];
+						String worldname = line.split("::")[8];
+						String[] aJob = {label, boss, x, y, z, salary, items, player, worldname};
+						this.postList.add(aJob);
+						plugin.jobManager.setPosts(player, aJob);
+					}
+					fr.close();
+					reader.close();
 				}
-				fr.close();
-				reader.close();
 			}
 		}
 	}
 	public boolean isInPostList() {
 
 		return false;
+	}
+	public String[] getchestContent(String playername) throws FileNotFoundException, IOException {
+		String[] chestContent = null;
+		List<World> world = plugin.getServer().getWorlds();
+		for (World w : world) {
+			String worldName = w.getName();
+			File parent = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Coffres");
+			String[] fileList = parent.list();
+			if (parent.exists()) {
+				String itemList = null;
+				for (int i = 0; i < fileList.length; i++) {
+					if (fileList[i].substring(0, fileList[i].length()-3).toLowerCase().equals(playername.toLowerCase())) {
+						File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldName + System.getProperty("file.separator") + "Coffres" + System.getProperty("file.separator") + fileList[i]);
+						FileReader fr = new FileReader(file);
+						BufferedReader reader = new BufferedReader(fr);
+						String line;
+						while ((line = reader.readLine()) != null) {
+							itemList = line.split("::")[4].substring(1, line.split("::")[4].length()-1);
+						}
+						fr.close();
+						reader.close();
+					}
+				}
+				if (itemList != null)
+					chestContent = itemList.split(", ");
+			}
+		}
+		return chestContent;
+	}
+
+	public void setChestContent(String playername, String worldname, Object[] newContent) throws FileNotFoundException, IOException {
+		File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + worldname + System.getProperty("file.separator") + "Coffres" + System.getProperty("file.separator") + playername.toUpperCase() + ".db");
+		if (file.exists()) {
+			FileReader fr = new FileReader(file);
+			BufferedReader reader = new BufferedReader(fr);
+			String line = "";
+			ArrayList replace = new ArrayList();
+			while ((line = reader.readLine()) != null) {
+				replace.add(line + System.getProperty("line.separator"));
+			}
+			fr.close();
+			reader.close();
+			file.delete();
+			file.createNewFile();
+			writer = new FileWriter(file, true);
+			String oldLine = replace.toString();
+			oldLine = oldLine.substring(1, oldLine.length()-1);
+			String[] aSplit = oldLine.split("::");
+			String[] aPost = getPost(playername);
+			String items = "[";
+			for(int n = 0; n < newContent.length; n++) {
+				String chestId = newContent[n].toString().split(":")[0];
+				String chestNb = newContent[n].toString().split(":")[1];
+				String[] aItems = aPost[6].substring(1, aSplit[4].length()-1).split(", ");
+				for (int i = 0; i < aItems.length; i++) {
+					String askId = aItems[i].split(":")[0];
+					String askNb = aItems[i].split(":")[1];
+					if (chestId.equals(askId)) {
+						int askNbInt = new Integer(askNb);
+						int chestNbInt = new Integer(chestNb);
+						int newAskNb = askNbInt - chestNbInt;
+						items += askId + ":" + newAskNb;
+					}
+				}
+				if (n != 0 && n == newContent.length-1) {
+					items += ", ";
+				}
+			}
+			items += "]";
+			String newLine = aPost[2] + "::" + aPost[3] + "::" + aPost[4] + "::" + aPost[5] + "::" + items + "::" + aPost[7];
+			writer.write(newLine);
+			writer.flush();
+			writer.close();
+		}
 	}
 
 	// OTHER

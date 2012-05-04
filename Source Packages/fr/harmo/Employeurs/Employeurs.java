@@ -102,4 +102,10 @@ public class Employeurs extends JavaPlugin {
 			player.sendMessage(defaultMessages.get(i));
 		}
 	}
+
+	public void sendConsoleMessageList(List<String> defaultMessages) {
+		for (int i = 0; i < defaultMessages.size(); i++) {
+			getLogger().info(defaultMessages.get(i));
+		}
+	}
 }
