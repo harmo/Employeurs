@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.bukkit.World;
-import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -346,7 +345,8 @@ public class EFile {
 			String filename = fileList[i].substring(0, fileList[i].length()-3);
 			if (filename.equals(playername.toUpperCase())) {
 				File file = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Postes" + System.getProperty("file.separator") + playername.toUpperCase() + ".db");
-				if (file.delete())
+				File chestFile = new File("plugins" + System.getProperty("file.separator") + "Employeurs" + System.getProperty("file.separator") + world + System.getProperty("file.separator") + "Coffres" + System.getProperty("file.separator") + playername.toUpperCase() + ".db");
+				if (file.delete() && chestFile.delete())
 					return true;
 			}
 		}
@@ -445,7 +445,7 @@ public class EFile {
 			for(int n = 0; n < newContent.length; n++) {
 				String chestId = newContent[n].toString().split(":")[0];
 				String chestNb = newContent[n].toString().split(":")[1];
-				String[] aItems = aPost[6].substring(1, aSplit[4].length()-1).split(", ");
+				String[] aItems = aPost[6].substring(1, aPost[6].length()-1).split(", ");
 				for (int i = 0; i < aItems.length; i++) {
 					String askId = aItems[i].split(":")[0];
 					String askNb = aItems[i].split(":")[1];

@@ -1,6 +1,6 @@
 name: Employeurs
 main: fr.harmo.Employeurs.Employeurs
-version: 0.4
+version: 0.8
 author: Harmo
 softdepend: [Vault]
 commands:

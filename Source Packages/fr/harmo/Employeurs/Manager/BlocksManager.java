@@ -3,10 +3,11 @@ package fr.harmo.Employeurs.Manager;
 import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.material.Sign;
+import org.bukkit.block.Sign;
 
 /**
  *
@@ -197,6 +198,13 @@ public class BlocksManager {
 		}
 		else
 			return "bottomBlockError";
+	}
+
+	public void changeSignStatus(Sign sign) {
+		sign.setLine(1, ChatColor.RED + "Mission");
+		sign.setLine(2, ChatColor.RED + "Accomplie !");
+		sign.setLine(3, ChatColor.RED + "");
+		sign.update();
 	}
 
 }

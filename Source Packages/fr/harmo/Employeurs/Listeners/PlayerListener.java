@@ -5,7 +5,7 @@ import fr.harmo.Employeurs.Employeurs;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map.Entry;
+import java.util.Map;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -21,7 +21,6 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemStack;
 
 /**
  *
@@ -338,23 +337,41 @@ public class PlayerListener implements Listener {
 								}
 								else {
 									Location loc = sign.getLocation();
-									String chestCreation = plugin.blocksM.createChest(loc);
-									if (chestCreation.equals("bottomBlockError")) {
-										player.sendMessage("Veuillez detruire ce qui se trouve sous le panneau.");
-										event.setCancelled(true);
-									}
-									else if (chestCreation.equals("rightBlockError")) {
-										player.sendMessage("Veuillez detruire ce qui se trouve en bas a droite du panneau.");
-										event.setCancelled(true);
-									}
-									else {
-										if (plugin.jobManager.takeJob(player, sign.getLocation())) {
-											sign.setLine(3, player.getName().toString());
-											sign.update();
-											player.sendMessage("Vous avez le poste !!");
+									if (!plugin.jobManager.isSignHasChest(loc)) {
+										String chestCreation = plugin.blocksM.createChest(loc);
+										if (chestCreation.equals("bottomBlockError")) {
+											player.sendMessage("Veuillez detruire ce qui se trouve sous le panneau.");
+											event.setCancelled(true);
+										}
+										else if (chestCreation.equals("rightBlockError")) {
+											player.sendMessage("Veuillez detruire ce qui se trouve en bas a droite du panneau.");
+											event.setCancelled(true);
 										}
 										else {
-											plugin.blocksM.destroyChest(loc);
+											if (plugin.jobManager.takeJob(player, sign.getLocation())) {
+												sign.setLine(3, player.getName().toString());
+												sign.update();
+												player.sendMessage("Vous avez le poste !!");
+											}
+											else {
+												plugin.blocksM.destroyChest(loc);
+											}
+										}
+									}
+									else {
+										plugin.jobManager.registerPlayerChest(player, player.getWorld().getName());
+										player.sendMessage("Coffre mis a jour !");
+										HashMap<Integer, Integer> restItems = plugin.jobManager.getRestItems(loc);
+										int restSize = restItems.size();
+										if (restSize > 0 ) {
+											for (Map.Entry<Integer, Integer> item : restItems.entrySet()) {
+												player.sendMessage("Il manque " + item.getValue() + " de " + Material.getMaterial(item.getKey()).toString());
+											}
+										}
+										else {
+											// change sign status (wait boss aprovation)
+											plugin.blocksM.changeSignStatus(sign);
+											player.sendMessage("Mission accomplie, veuillez attendre la confirmation de l employeur");
 										}
 									}
 								}
@@ -379,39 +396,6 @@ public class PlayerListener implements Listener {
 					player.sendMessage("Vous ne pouvez pas ouvrir ce coffre");
 					event.setCancelled(true);
 				}
-				else {
-					/*
-					// TODO evaluer le contenu du coffre et le comparer au poste
-					ItemStack[] itemsInChest;
-					Inventory inventory;
-					Chest chest = (Chest) block.getState();
-					inventory  = chest.getInventory();
-					itemsInChest = inventory.getContents();
-					aItems.clear();
-					for (int i = 0; i < itemsInChest.length; i++) {
-						if (itemsInChest[i] != null) {
-							//String item = itemsInChest[i].getType().toString();
-							int itemID = itemsInChest[i].getTypeId() ;
-							int itemAmount = itemsInChest[i].getAmount();
-							if (aItems.containsKey(itemID)) {
-								int newAmount = (int) aItems.get(itemID) + itemAmount;
-								aItems.remove(itemID);
-								aItems.put(itemID, newAmount);
-							}
-							else {
-								aItems.put(itemID, itemAmount);
-							}
-						}
-					}
-					for (Entry<Integer, Integer> item : aItems.entrySet()) {
-						Integer key = item.getKey();
-						Integer val = item.getValue();
-						String itemName = Material.getMaterial(key).toString();
-						Integer rest = plugin.jobManager.howManyItemsMore(val, key, chest.getLocation());
-						player.sendMessage("Il manque encore " + rest + " de " + itemName);
-					}
-					*/
-				}
 			}
 		}
 	}
@@ -419,47 +403,16 @@ public class PlayerListener implements Listener {
 	@EventHandler
 	public void onChestItemAdd(InventoryClickEvent event) {
 		String type = event.getInventory().getType().toString();
+		Player player = (Player) event.getWhoClicked();
 		if (type.equals("CHEST")) {
 			DoubleChest chest = (DoubleChest) event.getInventory().getHolder();
 			Chest lChest = (Chest) chest.getLeftSide();
 			Block lBlock = lChest.getBlock();
 			if (plugin.jobManager.isJobChest(lBlock)) {
 				if (event.getRawSlot() < 54) {
-					Player player = (Player) event.getWhoClicked();
-					if (!event.getCurrentItem().toString().equals("AIR")) {
-						// au click il y avait kke chose dans slot
-					}
-					if (!event.getCursor().toString().equals("AIR")) {
-						// au click player a pose kke chose
-					}
-					ItemStack itemstack = event.getCurrentItem();
-					Integer itemID = itemstack.getTypeId();
-					aItems.clear();
-					if (plugin.jobManager.isItemInPost(itemID, player)) {
-						ItemStack[] itemsInChest = chest.getInventory().getContents();
-						aItems.put(itemstack.getTypeId(), itemstack.getAmount());
-						for (int i = 0; i < itemsInChest.length; i++) {
-							if (itemsInChest[i] != null) {
-								//String item = itemsInChest[i].getType().toString();
-								int itemId = itemsInChest[i].getTypeId() ;
-								int itemAmount = itemsInChest[i].getAmount();
-								if (aItems.containsKey(itemId)) {
-									int newAmount = (int) aItems.get(itemId) + itemAmount;
-									aItems.remove(itemId);
-									aItems.put(itemId, newAmount);
-								}
-								else {
-									aItems.put(itemId, itemAmount);
-								}
-							}
-						}
-						for (Entry<Integer, Integer> item : aItems.entrySet()) {
-							Integer key = item.getKey();
-							Integer val = item.getValue();
-							String itemName = Material.getMaterial(key).toString();
-							Integer rest = plugin.jobManager.howManyItemsMore(val, key, chest.getLocation());
-							player.sendMessage("Il manque encore " + rest + " de " + itemName);
-						}
+					 // TODO debug items exchange with not authorized one
+					if (!plugin.jobManager.isItemInPost(event.getCurrentItem().getTypeId(), player) && !plugin.jobManager.isItemInPost(event.getCursor().getTypeId(), player)) {
+						event.setCancelled(true);
 					}
 				}
 			}

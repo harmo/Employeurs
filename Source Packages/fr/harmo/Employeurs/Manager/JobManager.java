@@ -2,14 +2,13 @@ package fr.harmo.Employeurs.Manager;
 
 import fr.harmo.Employeurs.Config.Config;
 import fr.harmo.Employeurs.Employeurs;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -248,23 +247,39 @@ public class JobManager {
 		Chest chest = (Chest) loc.getBlock().getState();
 		return chest;
 	}
-	public Integer howManyItemsMore(int itemAmount, int itemId, Location loc) {
-		int rest = 0;
-		Location signLoc = getSignLocWithChest(loc);
-		String[] aInfos = getJobInfos(signLoc);
+	public HashMap howManyItemsMore(Location loc) {
+		HashMap restItems = new HashMap();
+		loc.setY(loc.getY()+1);
+		String[] aInfos = getJobInfos(loc);
+		ItemStack[] chestContent = getChestContent(loc);
 		if (aInfos != null) {
 			String[] aItems = aInfos[6].substring(1, aInfos[6].length()-1).split(",");
 			for (int i = 0; i < aItems.length; i++) {
 				String[] aSplit = aItems[i].split(":");
-				Integer id = new Integer(aSplit[0]);
-				Integer amount = new Integer(aSplit[1]);
-				if (id == itemId) {
-					rest = amount - itemAmount;
+				int id = new Integer(aSplit[0]);
+				int amount = new Integer(aSplit[1]);
+				for (int n = 0; n < chestContent.length; n++) {
+					if (chestContent[n] != null) {
+						int chestId = chestContent[n].getTypeId();
+						int chestAmount = chestContent[n].getAmount();
+						if (chestId == id) {
+							restItems.put(id, amount - chestAmount);
+						}
+					}
 				}
 			}
 		}
-
-		return rest;
+		return restItems;
+	}
+	public HashMap getRestItems(Location loc) {
+		HashMap<Integer, Integer> restItems = new HashMap<>();
+		HashMap<Integer, Integer> chestItems = howManyItemsMore(loc);
+		for (Map.Entry<Integer, Integer> item : chestItems.entrySet()) {
+			if (item.getValue() > 0) {
+				restItems.put(item.getKey(), item.getValue());
+			}
+		}
+		return restItems;
 	}
 	public Location getSignLocWithChest(Location loc) {
 		Location signLoc = loc;
@@ -328,7 +343,7 @@ public class JobManager {
 				double x = new Integer(aPost[2]);
 				double y = new Integer(aPost[3]);
 				double z = new Integer(aPost[4]);
-				World world = plugin.getServer().getWorld(worldname);
+				World world = player.getWorld();
 				Location loc = new Location(world, x, y, z);
 				ItemStack[] chest = getChestContent(loc);
 
@@ -346,6 +361,12 @@ public class JobManager {
 				io.printStackTrace();
 			}
 		}
+	}
+	public boolean isSignHasChest(Location loc) {
+		ItemStack[] chest = getChestContent(loc);
+		if (chest != null)
+			return true;
+		return false;
 	}
 
 }
