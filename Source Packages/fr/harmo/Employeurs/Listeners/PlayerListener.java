@@ -20,6 +20,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
@@ -336,9 +337,9 @@ public class PlayerListener implements Listener {
 									}
 								}
 								else {
-									Location loc = sign.getLocation();
-									if (!plugin.jobManager.isSignHasChest(loc)) {
-										String chestCreation = plugin.blocksM.createChest(loc);
+									Location signLoc = sign.getLocation();
+									if (!plugin.jobManager.isSignHasChest(signLoc)) {
+										String chestCreation = plugin.blocksM.createChest(signLoc);
 										if (chestCreation.equals("bottomBlockError")) {
 											player.sendMessage("Veuillez detruire ce qui se trouve sous le panneau.");
 											event.setCancelled(true);
@@ -354,14 +355,14 @@ public class PlayerListener implements Listener {
 												player.sendMessage("Vous avez le poste !!");
 											}
 											else {
-												plugin.blocksM.destroyChest(loc);
+												plugin.blocksM.destroyChest(signLoc);
 											}
 										}
 									}
 									else {
 										plugin.jobManager.registerPlayerChest(player, player.getWorld().getName());
 										player.sendMessage("Coffre mis a jour !");
-										HashMap<Integer, Integer> restItems = plugin.jobManager.getRestItems(loc);
+										HashMap<Integer, Integer> restItems = plugin.jobManager.getRestItems(signLoc);
 										int restSize = restItems.size();
 										if (restSize > 0 ) {
 											for (Map.Entry<Integer, Integer> item : restItems.entrySet()) {
@@ -425,5 +426,17 @@ public class PlayerListener implements Listener {
 		String worldname = player.getWorld().getName();
 		// TODO register chest if player got one
 		plugin.jobManager.registerPlayerChest(player, worldname);
+	}
+
+	@EventHandler
+	public void onplayerLogin(PlayerJoinEvent event) {
+		Player player = event.getPlayer();
+		// TODO consulter messages si employeur
+		ArrayList aMessages = plugin.jobManager.getBossMessages(player);
+		if (aMessages.size() > 0) {
+			plugin.sendMessageList(player, aMessages);
+
+		}
+		// TODO consulter messages si employé
 	}
 }

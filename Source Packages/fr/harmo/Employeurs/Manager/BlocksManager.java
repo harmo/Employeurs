@@ -141,7 +141,7 @@ public class BlocksManager {
 		}
 	}
 	public String createChest(Location loc) {
-		loc.setY(loc.getY()-1);
+		//loc.setY(loc.getY()-1);
 		Block block = loc.getBlock();
 		Block nextBlock;
 		String northBlock = block.getRelative(BlockFace.NORTH).getType().toString();

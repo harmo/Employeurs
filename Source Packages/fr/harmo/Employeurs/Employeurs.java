@@ -55,6 +55,7 @@ public class Employeurs extends JavaPlugin {
 		jobCreation = new JobCreation(this);
 		offerCreation = new OfferCreation(this);
 		tests = new Tests(this);
+		jobManager.loadBossMessages();
 
 		PluginManager pm = this.getServer().getPluginManager();
 		pm.registerEvents(blocksL, this);

@@ -26,10 +26,56 @@ public class JobManager {
 	private Employeurs plugin;
 	private HashMap<String, String[]> aJobs = new HashMap();
 	private HashMap<String, String[]> aChests = new HashMap();
+	private HashMap<String, ArrayList> aBossMessages = new HashMap<>();
 	private static final BlockFace[] faces = new BlockFace[]{BlockFace.NORTH, BlockFace.EAST, BlockFace.SOUTH, BlockFace.WEST};
 
 	public JobManager(Employeurs plugin) {
 		this.plugin = plugin;
+	}
+
+	public ArrayList getBossMessages(Player player) {
+		if (aBossMessages.containsKey(player.getName())) {
+			return aBossMessages.get(player.getName());
+		}
+		return null;
+	}
+	public void setBossMessage(String playername, ArrayList message) {
+		if (aBossMessages.containsKey(playername)) {
+			aBossMessages.remove(playername);
+		}
+		aBossMessages.put(playername, message);
+	}
+	public void loadBossMessages() {
+		ArrayList message = new ArrayList();
+		HashMap<String, ArrayList> boss = new HashMap();
+		if (!Config.mysql) {
+			// boucle sur les offres (pour determiner combien d offres par employeur)
+			// faire un array avec tous les messages pour toutes les offres d'un employeur
+			ArrayList offerList = Config.getDbFile().getOfferList();
+			ArrayList postList = Config.getDbFile().getPostList();
+			for (int n = 0; n < postList.size(); n++) {
+				String[] aOffer = (String[]) offerList.get(n);
+				/*for (int a = 0; a < aOffer.length; a++) {
+					plugin.getLogger().info("offre -> " + a + " = " + aOffer[a]);
+				}*/
+				for (int i = 0; i < postList.size(); i++) {
+					String[] aPost = (String[]) postList.get(i);
+					/*for (int b = 0; b < aOffer.length; b++) {
+						plugin.getLogger().info("poste -> " + b + " = " + aPost[b]);
+					}*/
+					if (aOffer[1].equalsIgnoreCase(aPost[1])) {
+						message.add("[Employeur]");
+						message.add(aPost[7] + " a accepte votre offre de " + aPost[0]);
+						message.add("_________");
+						boss.put(aOffer[1], message);
+					}
+
+					setBossMessage(aPost[1], message);
+				}
+			}
+
+
+		}
 	}
 
 	public ArrayList getJobList() {
@@ -336,35 +382,38 @@ public class JobManager {
 		return recolted;
 	}
 	public void registerPlayerChest(Player player, String worldname) {
-		if (!Config.mysql) {
-			try {
-				ArrayList chestContent = new ArrayList();
-				String[] aPost = Config.getDbFile().getPost(player.getName());
-				double x = new Integer(aPost[2]);
-				double y = new Integer(aPost[3]);
-				double z = new Integer(aPost[4]);
-				World world = player.getWorld();
-				Location loc = new Location(world, x, y, z);
-				ItemStack[] chest = getChestContent(loc);
+		if (havePost(player.getName())) {
+			if (!Config.mysql) {
+				try {
+					ArrayList chestContent = new ArrayList();
+					String[] aPost = Config.getDbFile().getPost(player.getName());
+					double x = new Integer(aPost[2]);
+					double y = new Integer(aPost[3]);
+					double z = new Integer(aPost[4]);
+					World world = player.getWorld();
+					Location loc = new Location(world, x, y, z);
+					ItemStack[] chest = getChestContent(loc);
 
-				for (int i = 0; i < chest.length; i++) {
-					if (chest[i] != null) {
-						if (!chestContent.contains(chest[i].getTypeId())) {
-							chestContent.add(chest[i].getTypeId() + ":" + chest[i].getAmount());
+					for (int i = 0; i < chest.length; i++) {
+						if (chest[i] != null) {
+							if (!chestContent.contains(chest[i].getTypeId())) {
+								chestContent.add(chest[i].getTypeId() + ":" + chest[i].getAmount());
+							}
 						}
 					}
+					if (chestContent.size() > 0) {
+						Config.getDbFile().setChestContent(player.getName(), worldname, chestContent.toArray());
+					}
+				} catch (IOException io) {
+					io.printStackTrace();
 				}
-				if (chestContent.size() > 0) {
-					Config.getDbFile().setChestContent(player.getName(), worldname, chestContent.toArray());
-				}
-			} catch (IOException io) {
-				io.printStackTrace();
 			}
 		}
 	}
 	public boolean isSignHasChest(Location loc) {
-		ItemStack[] chest = getChestContent(loc);
-		if (chest != null)
+		loc.setY(loc.getY()-1);
+		String chest = loc.getBlock().getType().toString();
+		if (chest.equals("CHEST"))
 			return true;
 		return false;
 	}
